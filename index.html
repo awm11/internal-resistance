@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Internal Resistance Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:ital,opsz,wght@1,8..60,600&display=swap">
+<style>
+/* Layout: lab bench. Left: the circuit (always light, like electricity-overlap) with the graph fixed beneath it. Right: what you measure and work out. */
+:root{
+  --bg:#edf1ef; --surface:#ffffff; --surface-2:#e2e8e5; --fg:#132120; --muted:#4d5f5b; --line:#c8d3cf;
+  --accent:#0d7a70; --accent-soft:#d3ebe7;
+  --lost:#b3541e; --lost-soft:#f6e3d6;
+  --point:#6a3fd0;
+  --ok:#1b7f45; --ok-soft:#dcf1e3; --warn:#9a6a00; --warn-soft:#f7ecd0; --bad:#b8352b; --bad-soft:#f8e0dd;
+  --paper:#fbfdfc; --grid:#d5e3de; --grid-major:#a9c2ba;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --f-sym:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --r:10px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0a1213; --surface:#111c1e; --surface-2:#172629; --fg:#e2ecea; --muted:#92a6a2; --line:#253739;
+  --accent:#3cc3b2; --accent-soft:#163a37;
+  --lost:#f09a5e; --lost-soft:#3a2415;
+  --point:#b9a6ff;
+  --ok:#4cc77f; --ok-soft:#15301f; --warn:#e5b443; --warn-soft:#33280f; --bad:#ff6d60; --bad-soft:#3a1a17;
+  --paper:#0e1819; --grid:#1b2b2d; --grid-major:#2f4649;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0a1213; --surface:#111c1e; --surface-2:#172629; --fg:#e2ecea; --muted:#92a6a2; --line:#253739;
+  --accent:#3cc3b2; --accent-soft:#163a37;
+  --lost:#f09a5e; --lost-soft:#3a2415;
+  --point:#b9a6ff;
+  --ok:#4cc77f; --ok-soft:#15301f; --warn:#e5b443; --warn-soft:#33280f; --bad:#ff6d60; --bad-soft:#3a1a17;
+  --paper:#0e1819; --grid:#1b2b2d; --grid-major:#2f4649;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.5;padding:20px 16px 40px}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
+header>div:first-child{flex:1 1 520px;min-width:0}
+.eyebrow{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.12em;font-size:.85rem;color:var(--accent);font-weight:600}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(2rem,4.5vw,2.9rem);line-height:1;margin:.15em 0 .2em;text-wrap:balance;letter-spacing:.01em}
+h2{font-family:var(--f-display);font-weight:600;font-size:1.35rem;line-height:1.1;margin:0;letter-spacing:.02em;text-wrap:balance}
+.lede{margin:0;color:var(--muted)}
+.tabs{display:flex;background:var(--surface-2);border-radius:999px;padding:4px;gap:4px}
+.tab{border:0;background:transparent;padding:8px 18px;border-radius:999px;cursor:pointer;font-weight:600;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+.lab{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);gap:18px;align-items:start}
+@media (max-width:980px){.lab{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.label{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.1em;font-size:.8rem;font-weight:600;color:var(--muted)}
+.label i{text-transform:none;letter-spacing:0;font-family:var(--f-body);font-size:1.15em}
+.note{font-size:.9rem;color:var(--muted);margin:0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row.between{justify-content:space-between}
+
+.circuit{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:#fafafa}
+.circuit canvas{display:block;width:100%;height:auto;aspect-ratio:760/575;touch-action:none}
+.circuit .pause{position:absolute;top:10px;right:10px;border:1px solid #9fb4c2;background:#ffffff;color:#17324a;border-radius:8px;padding:3px 10px;font-size:.85rem;font-weight:600;cursor:pointer}
+.circuit .pause:hover{border-color:#17324a}
+.circuit .pause[aria-pressed="true"]{background:#dff0f5}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.small{padding:3px 9px;font-size:.85rem}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* Explore */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:6px 12px;cursor:pointer;text-align:left;line-height:1.25}
+.chip b{display:block}
+.chip span{font-family:var(--f-mono);font-size:.82rem;color:var(--muted)}
+.chip[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.bar{display:flex;height:30px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2)}
+.bar .v{background:var(--accent)}
+.bar .l{background:var(--lost)}
+.bar div{transition:width .15s linear}
+.eqn{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);column-gap:6px;row-gap:4px;align-items:center;justify-items:center;padding:16px 12px 14px;border-radius:10px;background:var(--surface-2);border-bottom:4px solid var(--line)}
+.eqn .s{font-family:var(--f-sym);font-style:italic;font-weight:600;font-size:clamp(2.3rem,3.6vw,3rem);line-height:1.05}
+.eqn .n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600;font-size:clamp(1.15rem,1.75vw,1.5rem);white-space:nowrap}
+.eqn .u{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;font-size:.8rem;font-weight:600;color:var(--muted);text-align:center;line-height:1.2}
+.eqn .op{font-family:var(--f-mono);font-weight:600;font-size:1.5rem;color:var(--muted)}
+.eqn .c-v{color:var(--accent)} .eqn .c-l{color:var(--lost)} .eqn .c-i{color:var(--point)}
+.eqn.lost{border-bottom-color:var(--lost)}
+.pill{display:inline-block;font-family:var(--f-body);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-radius:999px;padding:0 7px;background:var(--surface);border:1px solid var(--line);color:var(--fg)}
+.takeaway{margin:0;padding:10px 12px;border-left:4px solid var(--lost);background:var(--lost-soft);border-radius:0 8px 8px 0}
+ul.try{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px}
+svg text{font-family:var(--f-mono)}
+
+/* Practical */
+.meters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.meter{background:#0c1a1c;border:1px solid #24383b;border-radius:8px;padding:8px 12px;color:#bfe9e2;display:flex;flex-direction:column;gap:0}
+.meter .label{color:#7fa39d}
+.meter .read{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:1.9rem;font-weight:500;line-height:1.15;text-align:right}
+.meter .read small{font-size:.55em;margin-left:.3em;color:#7fa39d}
+ol.steps{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px}
+.tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px}
+.tbl-wrap.results{height:230px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+thead th{background:var(--surface-2);font-weight:600;position:sticky;top:0}
+tbody tr:last-child td{border-bottom:0}
+td.num{font-family:var(--f-mono)}
+td.empty{text-align:left;color:var(--muted);white-space:normal}
+.graph{background:var(--paper);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.graph svg{display:block;width:100%;height:auto;touch-action:none;user-select:none}
+.graph .halo{paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+.handle{cursor:ns-resize}
+.field{display:grid;grid-template-columns:minmax(0,1fr) 110px auto;gap:8px;align-items:center}
+.field input{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-family:var(--f-mono);text-align:right}
+.verdict{display:flex;flex-direction:column;gap:10px}
+.verdict:empty{display:none}
+.st{font-size:.8rem;font-weight:700;border-radius:999px;padding:2px 9px;display:inline-block}
+.st.ok{background:var(--ok-soft);color:var(--ok)} .st.warn{background:var(--warn-soft);color:var(--warn)} .st.bad{background:var(--bad-soft);color:var(--bad)}
+.verdict ul{margin:0;padding-left:1.1em}
+@media (prefers-reduced-motion: reduce){.bar div{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">AQA A Level Physics · 3.5.1.6 · Required practical 6</div>
+      <h1>Internal Resistance Lab</h1>
+      <p class="lede">A cell has to push charge through itself as well as round the circuit. Its internal resistance stays the same, but the volts lost inside it depend on the current.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Mode">
+      <button class="tab" role="tab" id="tab-explore" aria-selected="true" aria-controls="view-explore">Explore</button>
+      <button class="tab" role="tab" id="tab-practical" aria-selected="false" aria-controls="view-practical">Practical</button>
+    </div>
+  </header>
+
+  <div class="lab">
+    <div class="col">
+      <div class="circuit">
+        <canvas id="sim" width="760" height="575" role="img" aria-label="A loop of wire with electrons moving round it. A battery region pushes them and resists them at the same time. Circuit symbols beside the wire show the cell with its internal resistance, a voltmeter across it, two ammeters, a switch and a variable resistor."></canvas>
+        <button class="pause" id="pauseBtn" aria-pressed="false">Pause electrons</button>
+        <div class="sr">
+          <label for="rheo">Variable resistor</label>
+          <input type="range" id="rheo" min="0.5" max="15" step="0.1" value="5">
+          <button id="switchBtn" aria-pressed="true">Switch: closed</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="row between"><h2>Terminal p.d. against current</h2><button class="btn small" id="lineBtn">Add line of best fit</button></div>
+        <div class="graph"><svg id="graph" viewBox="0 0 640 420" role="img" aria-label="Graph of terminal p.d. against current"></svg></div>
+        <p class="note" id="graphNote"></p>
+      </div>
+      <p class="note">Drag the variable resistor's contact and click the switch. Each dot stands for many electrons. They repel each other, so they spread out where they can and crowd up where the cell pushes them. Bluer wire means more crowding. The voltmeter compares the crowding at the two terminals.</p>
+    </div>
+
+    <!-- Explore -->
+    <div class="col" id="view-explore" role="tabpanel" aria-labelledby="tab-explore">
+      <div class="panel">
+        <div class="label">Choose a cell</div>
+        <div class="chips" role="radiogroup" aria-label="Cell" id="cells"></div>
+      </div>
+      <div class="panel">
+        <h2>Where the EMF goes</h2>
+        <div class="bar" aria-hidden="true"><div class="v" id="barV"></div><div class="l" id="barL"></div></div>
+        <div class="eqn" aria-live="off">
+          <span class="s">ε</span><span class="op">=</span><span class="s c-v">V</span><span class="op">+</span><span class="s c-l">Ir</span>
+          <span class="n" id="eqE"></span><span class="op">=</span><span class="n c-v" id="eqV"></span><span class="op">+</span><span class="n c-l" id="eqL"></span>
+          <span class="u">EMF</span><span></span><span class="u">terminal p.d.</span><span></span><span class="u">lost volts</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Lost volts depend on the current</h2>
+        <div class="eqn lost">
+          <span class="s c-l">Ir</span><span class="op">=</span><span class="s c-i">I</span><span class="op">×</span><span class="s">r</span>
+          <span class="n c-l" id="eqL2"></span><span class="op">=</span><span class="n c-i" id="eqI"></span><span class="op">×</span><span class="n" id="eqR"></span>
+          <span class="u">lost volts</span><span></span><span class="u">current</span><span></span><span class="u">internal resistance <span class="pill">fixed</span></span>
+        </div>
+        <p class="takeaway" id="takeaway"></p>
+      </div>
+      <div class="panel">
+        <div class="label">Try this</div>
+        <ul class="try">
+          <li>Open the switch. With no current there are no lost volts, so the voltmeter reads the EMF.</li>
+          <li>Turn the resistance down. The current rises, and so do the lost volts. Did <i>r</i> change?</li>
+          <li>Swap to the old cell at the same resistor setting. Same EMF, bigger <i>r</i>: what happens to the terminal p.d.?</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <div class="label">Circuit diagram</div>
+        <svg id="diagram" viewBox="0 0 360 262" role="img" aria-label="Circuit diagram: a cell of EMF epsilon with internal resistance r, a voltmeter across the cell, and in series with it ammeter 2, a switch, a variable resistor and ammeter 1." style="display:block;width:100%;height:auto;max-width:460px;margin:0 auto">
+          <g fill="none" stroke="var(--fg)" stroke-width="1.8" stroke-linecap="square">
+            <path d="M40 90H150M158 90H180M216 90H320V112M320 138V172M320 198V220H220M140 220H40V168M40 142V90"/>
+            <path d="M150 74V106"/><path d="M158 81V99" stroke-width="5" stroke-linecap="butt"/>
+            <rect x="180" y="83" width="36" height="14" fill="var(--surface)"/>
+            <rect x="122" y="60" width="116" height="56" stroke="var(--muted)" stroke-width="1.3" stroke-dasharray="5 4"/>
+            <path d="M92 90V30H167M193 30H268V90" stroke-width="1.4"/>
+            <circle cx="180" cy="30" r="13" fill="var(--surface)"/>
+            <circle cx="320" cy="125" r="13" fill="var(--surface)"/>
+            <circle cx="40" cy="155" r="13" fill="var(--surface)"/>
+            <rect x="140" y="213" width="80" height="14" fill="var(--surface)"/>
+            <path d="M152 238L206 203M206 203l-9 1M206 203l-4 8" stroke-linecap="round"/>
+            <path id="dgLever" d="M320 198V172" stroke-linecap="round"/>
+          </g>
+          <g fill="var(--fg)" stroke="none">
+            <circle cx="92" cy="90" r="3"/><circle cx="268" cy="90" r="3"/><circle cx="320" cy="172" r="3"/><circle cx="320" cy="198" r="3"/>
+            <g text-anchor="middle" font-size="13" font-weight="700" style="font-family:var(--f-body)">
+              <text x="180" y="35" style="font-family:var(--f-body)">V</text>
+              <text x="320" y="130" style="font-family:var(--f-body)">A</text><text x="40" y="160" style="font-family:var(--f-body)">A</text>
+            </g>
+            <text x="154" y="71" text-anchor="middle" font-size="15" style="font-family:var(--f-sym);font-style:italic;font-weight:600">ε</text>
+            <text x="198" y="78" text-anchor="middle" font-size="15" style="font-family:var(--f-sym);font-style:italic;font-weight:600">r</text>
+            <g font-size="11.5" fill="var(--muted)">
+              <text x="126" y="55" style="font-family:var(--f-body)">cell</text>
+              <text x="60" y="159" style="font-family:var(--f-body)">ammeter 1</text>
+              <text x="300" y="129" text-anchor="end" style="font-family:var(--f-body)">ammeter 2</text>
+              <text x="300" y="189" text-anchor="end" id="dgSwitch" style="font-family:var(--f-body)">switch closed</text>
+              <text x="180" y="254" text-anchor="middle" style="font-family:var(--f-body)">variable resistor</text>
+              <text x="141" y="85" text-anchor="end" style="font-family:var(--f-body)">+</text><text x="167" y="85" style="font-family:var(--f-body)">−</text>
+            </g>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Practical -->
+    <div class="col" id="view-practical" role="tabpanel" aria-labelledby="tab-practical" hidden>
+      <div class="panel">
+        <div class="row between"><h2 id="cellName">Mystery cell</h2><button class="btn small" id="newCell">New mystery cell</button></div>
+        <ol class="steps">
+          <li>Set the variable resistor, then record the current and terminal p.d.</li>
+          <li>Repeat for a wide range of currents. Aim for at least six readings.</li>
+          <li>Draw a line of best fit on the graph, then find the EMF and <i>r</i> from it.</li>
+        </ol>
+        <div class="meters">
+          <div class="meter"><span class="label">Ammeter 1</span><span class="read"><span id="mI">0.00</span><small>A</small></span></div>
+          <div class="meter"><span class="label">Voltmeter</span><span class="read"><span id="mV">0.00</span><small>V</small></span></div>
+        </div>
+        <button class="btn primary" id="recordBtn">Record reading</button>
+      </div>
+      <div class="panel">
+        <div class="row between"><div class="label">Results</div><button class="btn small" id="clearBtn">Clear all</button></div>
+        <div class="tbl-wrap results"><table>
+          <thead><tr><th>#</th><th><i>I</i> / A</th><th><i>V</i> / V</th><th><span class="sr">Remove</span></th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table></div>
+      </div>
+      <div class="panel">
+        <h2>Your results</h2>
+        <p class="note"><i>V</i> = <i>ε</i> − <i>Ir</i>, so the graph is a straight line. What do its intercept and gradient tell you?</p>
+        <form id="answers" class="col" style="gap:10px">
+          <div class="field"><label for="ansE">EMF, <i>ε</i></label><input id="ansE" inputmode="decimal" autocomplete="off"><span>V</span></div>
+          <div class="field"><label for="ansR">Internal resistance, <i>r</i></label><input id="ansR" inputmode="decimal" autocomplete="off"><span>Ω</span></div>
+          <button class="btn primary" type="submit">Check my values</button>
+        </form>
+        <div class="verdict" id="verdict" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Simplified electron engine: one fixed loop laid out like a circuit diagram.
+   Same rules as the electricity-overlap engine: short-range repulsion, velocity
+   damping, a push inside the cell. Resistive regions damp velocity faster. */
+const GEO = {
+  W: 760, H: 575,
+  L: 96, R: 636, T: 200, B: 500,   // centreline of the loop
+  hw: 27, m: 22, bm: 46,                  // half channel width; half width electrons may occupy
+  battX1: 276, capX: 316, battX2: 456, // battery: + cap from battX1, then the active region (push and resistance together)
+  trackX1: 206, trackX2: 526,      // rheostat track on the bottom arm
+  switchY: 392,
+  ammLeftY: 372, ammRightY: 300,
+  N: 465, RMAX: 15, RMIN: 0.5
+};
+const PHYS = { pump: 0.009, k: 5, gw: 0.0004, rep: 0.09, range: 26, radius: 3, noise: 0.012, rest: 1 };
+
+function createEngine(seedRandom) {
+  const rnd = seedRandom || Math.random;
+  const G = GEO, N = G.N;
+  const x = new Float32Array(N), y = new Float32Array(N);
+  const vx = new Float32Array(N), vy = new Float32Array(N);
+  const perim = 2 * (G.R - G.L) + 2 * (G.B - G.T);
+  const cs = PHYS.range;
+  const cols = Math.ceil(G.W / cs), rows = Math.ceil(G.H / cs);
+  const buckets = Array.from({ length: cols * rows }, () => []);
+  const SEG = 20, nSeg = Math.round(perim / SEG);
+  const segDensity = new Float32Array(nSeg);
+  const segCount = new Float32Array(nSeg);
+
+  const state = { emf: 1.5, r: 0.8, Rext: 5, closed: true, flow: 0, crossLeft: 0, crossRight: 0 };
+
+  function pointAt(s, off) { // s along loop clockwise from top-left; off across the channel
+    const w = G.R - G.L, h = G.B - G.T;
+    s = ((s % perim) + perim) % perim;
+    if (s < w) return [G.L + s, G.T + off];
+    if (s < w + h) return [G.R - off, G.T + (s - w)];
+    if (s < 2 * w + h) return [G.R - (s - w - h), G.B - off];
+    return [G.L + off, G.B - (s - 2 * w - h)];
+  }
+  function sOf(px, py) {
+    const w = G.R - G.L, h = G.B - G.T;
+    const inX = px > G.L + G.hw && px < G.R - G.hw;
+    if (py <= G.T + G.hw && inX) return px - G.L;
+    if (px > G.battX1 && px < G.battX2 && py <= G.T + G.bm + 1) return px - G.L; // inside the taller battery
+    if (py >= G.B - G.hw && inX) return w + h + (G.R - px);
+    if (px >= G.R - G.hw) return w + Math.min(h, Math.max(0, py - G.T));
+    return 2 * w + h + Math.min(h, Math.max(0, G.B - py));
+  }
+  function reset() {
+    for (let i = 0; i < N; i++) {
+      const p = pointAt(rnd() * perim, (rnd() * 2 - 1) * (G.m - 1));
+      x[i] = p[0]; y[i] = p[1]; vx[i] = 0; vy[i] = 0;
+    }
+    const mean = N / nSeg;
+    for (let k = 0; k < nSeg; k++) segDensity[k] = mean;
+  }
+  reset();
+
+  function trackContactX() {
+    const f = Math.min(1, Math.max(0, state.Rext / G.RMAX));
+    return G.trackX1 + f * (G.trackX2 - G.trackX1); // more resistance: contact further right, more track in the circuit
+  }
+
+  function step() {
+    const range = PHYS.range, range2 = range * range, rep = PHYS.rep;
+    for (let b = 0; b < buckets.length; b++) buckets[b].length = 0;
+    for (let i = 0; i < N; i++) {
+      const cx = Math.min(cols - 1, Math.max(0, (x[i] / cs) | 0));
+      const cy = Math.min(rows - 1, Math.max(0, (y[i] / cs) | 0));
+      buckets[cy * cols + cx].push(i);
+    }
+    for (let i = 0; i < N; i++) {
+      const cx = Math.min(cols - 1, Math.max(0, (x[i] / cs) | 0));
+      const cy = Math.min(rows - 1, Math.max(0, (y[i] / cs) | 0));
+      for (let gy = Math.max(0, cy - 1); gy <= Math.min(rows - 1, cy + 1); gy++) {
+        for (let gx = Math.max(0, cx - 1); gx <= Math.min(cols - 1, cx + 1); gx++) {
+          const bucket = buckets[gy * cols + gx];
+          for (let n = 0; n < bucket.length; n++) {
+            const j = bucket[n];
+            if (j <= i) continue;
+            const dx = x[j] - x[i], dy = y[j] - y[i];
+            const d2 = dx * dx + dy * dy;
+            if (d2 === 0 || d2 >= range2) continue;
+            const d = Math.sqrt(d2), nx = dx / d, ny = dy / d;
+            let f = rep * (range - d) / range;
+            const min = PHYS.radius * 2;
+            if (d < min) f += (min - d) * 0.05;
+            vx[i] -= nx * f; vy[i] -= ny * f;
+            vx[j] += nx * f; vy[j] += ny * f;
+          }
+        }
+      }
+    }
+
+    const pumpA = PHYS.pump * (state.emf / 1.5);
+    const dWire = Math.exp(-PHYS.gw);
+    const dInt = Math.exp(-(PHYS.gw + PHYS.k * state.r / (G.battX2 - G.capX)));
+    const dTrack = Math.exp(-(PHYS.gw + PHYS.k * G.RMAX / (G.trackX2 - G.trackX1)));
+    const xc = trackContactX();
+    const oL = G.L - G.m, oR = G.R + G.m, oT = G.T - G.m, oB = G.B + G.m;
+    const iL = G.L + G.m, iR = G.R - G.m, iT = G.T + G.m, iB = G.B - G.m;
+    let flowSum = 0;
+    const nz = PHYS.noise * 3.46; // uniform noise with standard deviation PHYS.noise
+    for (let k = 0; k < nSeg; k++) segCount[k] = 0;
+
+    for (let i = 0; i < N; i++) {
+      const px = x[i], py = y[i];
+      const top = py < G.T + G.hw, bottom = py > G.B - G.hw;
+      let damp = dWire;
+      if (top) {
+        if (px >= G.capX && px < G.battX2) { vx[i] += pumpA; damp = dInt; }
+      } else if (bottom && px >= G.trackX1 && px <= xc) damp = dTrack;
+      vx[i] = (vx[i] + (rnd() - 0.5) * nz) * damp; vy[i] = (vy[i] + (rnd() - 0.5) * nz) * damp;
+      let nx = px + vx[i], ny = py + vy[i];
+
+      const inB = px > G.battX1 && px < G.battX2 && py < G.T + G.bm + 1; // inside the battery, which is taller than the wire
+      if (inB) {
+        if (Math.abs(py - G.T) > G.m) { if (nx <= G.battX1) { nx = G.battX1 + 0.01; vx[i] = -vx[i]; } else if (nx >= G.battX2) { nx = G.battX2 - 0.01; vx[i] = -vx[i]; } }
+        const hh = (nx > G.battX1 && nx < G.battX2) ? G.bm : G.m;
+        if (ny < G.T - hh) { ny = G.T - hh; vy[i] = -vy[i]; } else if (ny > G.T + hh) { ny = G.T + hh; vy[i] = -vy[i]; }
+      } else {
+      // outer walls. In a corner, a hit turns the electron along the next arm (square corners that still conduct)
+      if (nx < oL || nx > oR) {
+        nx = nx < oL ? oL : oR;
+        if (py < iT || py > iB) { const sp = Math.hypot(vx[i], vy[i]); let v = vy[i] + (py < iT ? 1 : -1) * Math.abs(vx[i]); if (Math.abs(v) > sp) v = Math.sign(v) * sp; vy[i] = v; vx[i] = 0; }
+        else vx[i] = -vx[i];
+      }
+      if (ny < oT || ny > oB) {
+        ny = ny < oT ? oT : oB;
+        if (px < iL || px > iR) { const sp = Math.hypot(vx[i], vy[i]); let v = vx[i] + (px < iL ? 1 : -1) * Math.abs(vy[i]); if (Math.abs(v) > sp) v = Math.sign(v) * sp; vx[i] = v; vy[i] = 0; }
+        else vy[i] = -vy[i];
+      }
+      // inner block
+      if (nx > iL && nx < iR && ny > iT && ny < iB) {
+        const dl = nx - iL, dr = iR - nx, dt = ny - iT, db = iB - ny;
+        const mn = Math.min(dl, dr, dt, db);
+        if (mn === dl) { nx = iL; vx[i] *= -PHYS.rest; }
+        else if (mn === dr) { nx = iR; vx[i] *= -PHYS.rest; }
+        else if (mn === dt) { ny = iT; vy[i] *= -PHYS.rest; }
+        else { ny = iB; vy[i] *= -PHYS.rest; }
+      }
+      }
+      // open switch: a gap in the right arm that electrons cannot cross
+      if (!state.closed && nx > iR - 1 && py > G.T + G.hw && py < G.B - G.hw) {
+        const sy = G.switchY;
+        if (py <= sy - 5 && ny > sy - 5) { ny = sy - 5; vy[i] *= -PHYS.rest; }
+        else if (py >= sy + 5 && ny < sy + 5) { ny = sy + 5; vy[i] *= -PHYS.rest; }
+        else if (py > sy - 5 && py < sy + 5) { ny = py < sy ? sy - 5 : sy + 5; vy[i] = 0; }
+      }
+      // ammeter loop crossings (clockwise positive)
+      if (px < G.L + G.hw + 2) {
+        if (py > G.ammLeftY && ny <= G.ammLeftY) state.crossLeft++;
+        else if (py <= G.ammLeftY && ny > G.ammLeftY) state.crossLeft--;
+      } else if (px > G.R - G.hw - 2) {
+        if (py < G.ammRightY && ny >= G.ammRightY) state.crossRight++;
+        else if (py >= G.ammRightY && ny < G.ammRightY) state.crossRight--;
+      }
+      x[i] = nx; y[i] = ny;
+
+      // tangential velocity for the flow measure, and density by segment
+      const s = sOf(nx, ny);
+      const w = G.R - G.L, h = G.B - G.T;
+      flowSum += s < w ? vx[i] : s < w + h ? vy[i] : s < 2 * w + h ? -vx[i] : -vy[i];
+      segCount[Math.min(nSeg - 1, (s / SEG) | 0)]++;
+    }
+    state.flow += (flowSum / perim - state.flow) * 0.02; // electrons per step past any point
+    for (let k = 0; k < nSeg; k++) segDensity[k] += (segCount[k] - segDensity[k]) * 0.004;
+  }
+
+  return { x, y, vx, vy, N, state, step, reset, pointAt, sOf, trackContactX, segDensity, nSeg, SEG, perim };
+}
+
+
+</script>
+<script>
+(function(){
+"use strict";
+const G = GEO, $ = id => document.getElementById(id);
+const eng = createEngine();
+const CELLS = [
+  {id:"fresh", name:"Fresh cell", emf:1.5, r:0.30, k:1},
+  {id:"used",  name:"Used cell",  emf:1.5, r:0.80, k:1},
+  {id:"old",   name:"Old cell",   emf:1.5, r:1.60, k:1}
+];
+const app = {
+  mode:"explore", exploreCell:CELLS[1], mystery:null, R:5, closed:true, paused:false,
+  shown:{I1:0,I2:0,V:0}, readings:[], line:null, checked:false
+};
+const fmt = (x,d=2) => x.toFixed(d);
+const r2 = x => Math.round(x*100)/100;
+const clamp = (v,a,b) => Math.min(b, Math.max(a,v));
+const cell = () => app.mode==="explore" ? app.exploreCell : app.mystery;
+/* A mystery battery of EMF ε behaves like ε/1.5 cells: its internal resistance and the rheostat both scale by k,
+   so the currents stay in a sensible range whatever the EMF. */
+function truth(){
+  const c = cell();
+  if(!app.closed) return {I:0, V:c.emf, lost:0};
+  const Re = app.R*c.k, I = c.emf/(Re + c.r);
+  return {I, V:I*Re, lost:I*c.r};
+}
+function gauss(){ let u=0,v=0; while(!u)u=Math.random(); v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(6.2832*v); }
+function newMystery(){
+  const emf = r2(1.2 + Math.random()*8.3), k = emf/1.5;
+  const r = r2(k*(0.40 + Math.random()*1.20));
+  app.mystery = {id:"mystery", name:"Mystery cell", emf, r, k, tag:String.fromCharCode(65+Math.floor(Math.random()*26)) + (10+Math.floor(Math.random()*90))};
+}
+newMystery();
+function syncEngine(){
+  const c = cell();
+  eng.state.emf = 1.5; eng.state.r = c.r/c.k; eng.state.Rext = app.R; eng.state.closed = app.closed;
+}
+
+/* ---------- canvas ---------- */
+const cv = $("sim"), ctx = cv.getContext("2d");
+let dpr = 1;
+function sizeCanvas(){
+  const w = cv.clientWidth || G.W;
+  dpr = clamp((window.devicePixelRatio||1) * w / G.W, 1, 3);
+  cv.width = Math.round(G.W*dpr); cv.height = Math.round(G.H*dpr);
+}
+const sprite = (function(){
+  const s = document.createElement("canvas"), k = 4, R = 3, size = (R+1)*2;
+  s.width = s.height = size*k;
+  const c = s.getContext("2d"); c.scale(k,k);
+  const g = c.createRadialGradient(size/2-R*0.35,size/2-R*0.35,R*0.12,size/2,size/2,R);
+  g.addColorStop(0,"#e5fcff"); g.addColorStop(0.3,"#73def3"); g.addColorStop(0.78,"#2bb9dd"); g.addColorStop(1,"#087da6");
+  c.beginPath(); c.arc(size/2,size/2,R,0,Math.PI*2); c.fillStyle=g; c.fill();
+  c.strokeStyle="#087da6"; c.lineWidth=0.8; c.stroke();
+  return {img:s, size};
+})();
+const ghost = (function(){ // flat, paler copy for the tails
+  const s = document.createElement("canvas"), k = 4, R = 3, size = (R+1)*2;
+  s.width = s.height = size*k;
+  const c = s.getContext("2d"); c.scale(k,k);
+  c.beginPath(); c.arc(size/2,size/2,R,0,Math.PI*2); c.fillStyle="#73def3"; c.fill();
+  c.globalAlpha = 0.65; c.strokeStyle="#087da6"; c.lineWidth=0.55; c.stroke();
+  return {img:s, size};
+})();
+const GHOST_ALPHA = [0.24, 0.125, 0.058], GHOST_SCALE = [0.9, 0.8, 0.68]; // newest to oldest
+const hist = [0,1,2].map(() => ({x:new Float32Array(eng.N), y:new Float32Array(eng.N)}));
+function pushHistory(){ const last = hist.pop(); last.x.set(eng.x); last.y.set(eng.y); hist.unshift(last); }
+
+/* Wire artwork follows electricity-overlap: bevelled metal frame, pale underlay, open interior,
+   red frame where there is resistance, gold battery with a dark interior. */
+const FRAME = 7, W_ = G.R-G.L, H_ = G.B-G.T;
+const VY = 38, CY = 104, RY = 444, SX = 700;      // voltmeter row, cell symbol row, rheostat symbol row, switch symbol x
+const PROFILES = {
+  wire:["#1f4658","#2f6277","#537f91","#82aab9","#c4d9e0","#edf6f8","#c7dce3","#88adbb","#4f7f91","#254f62"],
+  res: ["#5b0911","#7f0c16","#c71f2f","#ef4b58","#ff8f98","#ffc3c7","#ff838c","#df3744","#ab1220","#700811"],
+  cell:["#6b4306","#8a5a0b","#c08a1c","#e6b23c","#f7d57a","#fff3cc","#f4cc62","#d79e28","#a16e11","#6b4306"]
+};
+const PROFILE_AT = [0,0.08,0.22,0.38,0.52,0.61,0.70,0.82,0.92,1];
+function profileColour(name, t){
+  const P = PROFILES[name];
+  for(let i=1;i<P.length;i++){ if(t > PROFILE_AT[i]) continue;
+    const a = P[i-1], b = P[i], m = (t-PROFILE_AT[i-1])/(PROFILE_AT[i]-PROFILE_AT[i-1]);
+    const ch = k => Math.round(parseInt(a.slice(k,k+2),16)*(1-m) + parseInt(b.slice(k,k+2),16)*m);
+    return "rgb("+ch(1)+","+ch(3)+","+ch(5)+")"; }
+  return P[P.length-1];
+}
+function channelPath(d){ ctx.beginPath(); ctx.rect(G.L-d,G.T-d,W_+2*d,H_+2*d); ctx.rect(G.L+d,G.T+d,W_-2*d,H_-2*d); }
+function strokeRing(d){ ctx.strokeRect(G.L-d,G.T-d,W_+2*d,H_+2*d); ctx.strokeRect(G.L+d,G.T+d,W_-2*d,H_-2*d); }
+function framePass(name){
+  const steps = 18;
+  for(let i=0;i<steps;i++){
+    const t = (i+0.5)/steps;
+    ctx.strokeStyle = profileColour(name, t); ctx.lineWidth = FRAME/steps + 0.35;
+    strokeRing(G.m + FRAME*(1-t));
+  }
+  ctx.strokeStyle = name==="wire" ? "#28566d" : "#5b0911"; ctx.lineWidth = 0.8; strokeRing(G.m+FRAME);
+}
+const BF = 8; // battery frame thickness
+function drawFrames(){
+  ctx.lineJoin = "miter";
+  const bx = G.battX1-BF, by = G.T-G.bm-BF, bw = G.battX2-G.battX1+2*BF, bh = 2*G.bm+2*BF;
+  ctx.save(); ctx.beginPath(); ctx.rect(0,0,G.W,G.H); ctx.rect(bx,by,bw,bh); ctx.clip("evenodd");
+  framePass("wire");
+  const xc = eng.trackContactX();
+  if(xc > G.trackX1+1){ ctx.save(); ctx.beginPath(); ctx.rect(G.trackX1, G.B-40, xc-G.trackX1, 80); ctx.clip(); framePass("res"); ctx.restore(); }
+  ctx.restore();
+  // gold frame right round the battery, open where the wires join
+  ctx.save(); ctx.beginPath(); ctx.rect(0,0,G.W,G.H); ctx.rect(bx-2,G.T-G.m,BF+3,2*G.m); ctx.rect(G.battX2-1,G.T-G.m,BF+3,2*G.m); ctx.clip("evenodd");
+  const steps = 20;
+  for(let i=0;i<steps;i++){ const t = (i+0.5)/steps, d = BF*(1-t);
+    ctx.strokeStyle = profileColour("cell", t); ctx.lineWidth = BF/steps + 0.4;
+    ctx.beginPath(); ctx.roundRect(G.battX1-d, G.T-G.bm-d, G.battX2-G.battX1+2*d, 2*G.bm+2*d, 2+d*0.4); ctx.stroke(); }
+  ctx.strokeStyle = "#6b4306"; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,5); ctx.stroke();
+  ctx.strokeStyle = "rgba(255,243,204,0.8)"; ctx.lineWidth = 0.8; ctx.strokeRect(G.battX1+0.5,G.T-G.bm+0.5,G.battX2-G.battX1-1,2*G.bm-1);
+  ctx.restore();
+  ctx.fillStyle = "#e9cf8f"; for(const x of [bx, G.battX2]) for(const y of [G.T-G.m-FRAME, G.T+G.m]){ ctx.beginPath(); ctx.roundRect(x,y,BF,FRAME,2); ctx.fill(); }
+}
+function segRect(k){
+  const S=eng.SEG, s=k*S, o=G.m;
+  if(s < W_) return [G.L+s, G.T-o, S, 2*o];
+  if(s < W_+H_) return [G.R-o, G.T+(s-W_), 2*o, S];
+  if(s < 2*W_+H_) return [G.R-(s-W_-H_)-S, G.B-o, S, 2*o];
+  return [G.L-o, G.B-(s-2*W_-H_)-S, 2*o, S];
+}
+/* The segment touching each corner collects the whole corner's electrons, so corners are tinted from their neighbours. */
+const SEGS = (function(){
+  const w=W_/eng.SEG, h=H_/eng.SEG, n=eng.nSeg, borrow=new Map(), skip=new Set();
+  const arms=[[0,w],[w,w+h],[w+h,2*w+h],[2*w+h,n]];
+  for(const [a,b] of arms){ borrow.set(a,a+2); borrow.set(a+1,a+2); borrow.set(b-1,b-3); borrow.set(b-2,b-3); skip.add(a); skip.add(b-1); }
+  const corners=[[G.L,G.T,2,n-3],[G.R,G.T,w-3,w+2],[G.R,G.B,w+h-3,w+h+2],[G.L,G.B,2*w+h-3,2*w+h+2]];
+  return {borrow, skip, corners};
+})();
+const B0 = Math.floor((G.battX1-G.L)/eng.SEG), B1 = Math.ceil((G.battX2-G.L)/eng.SEG);
+const tint = rel => "rgba(43,185,221,"+Math.min(0.4,rel*0.55).toFixed(3)+")";
+let dragging = false;
+const INK = "#17324a", INK_SOFT = "#4f6b80";
+function label(txt,x,y,o={}){
+  const fam = o.sym ? '"Source Serif 4",Georgia,serif' : o.mono ? '"IBM Plex Mono",ui-monospace,monospace' : '"Source Sans 3",system-ui,sans-serif';
+  ctx.font = (o.sym?"italic ":"")+(o.weight||"500")+" "+(o.size||13)+"px "+fam;
+  ctx.textAlign = o.align||"center"; ctx.textBaseline = o.base||"alphabetic";
+  ctx.fillStyle = o.color||INK; ctx.fillText(txt,x,y);
+}
+function readout(x,y,w,txt,pink){
+  ctx.fillStyle = pink ? "rgba(255,150,150,0.77)" : "#dff5df";
+  ctx.strokeStyle = pink ? "#a85555" : "#4f8a5b"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(x,y,w,26,5); ctx.fill(); ctx.stroke();
+  label(txt, x+w-8, y+18, {mono:true, weight:"600", size:14, align:"right", color:"#112233"});
+}
+function ammeterLoop(cx,cy,front){
+  ctx.strokeStyle = front ? "rgba(255,29,29,0.9)" : "rgb(172,23,23)";
+  ctx.lineWidth = front ? 4 : 3;
+  ctx.beginPath(); ctx.ellipse(cx,cy,G.m+FRAME+6,10,0, front?0:Math.PI, front?Math.PI:Math.PI*2); ctx.stroke();
+}
+function seg(x1,y1,x2,y2){ ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); }
+function arrow(x,y,len,col,lw){
+  ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+len,y); ctx.moveTo(x+len-7,y-6); ctx.lineTo(x+len,y); ctx.lineTo(x+len-7,y+6); ctx.stroke();
+  ctx.lineCap = "butt";
+}
+function draw(){
+  const c = cell(), explore = app.mode==="explore", m = G.m, xc = eng.trackContactX();
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.fillStyle = "#fafafa"; ctx.fillRect(0,0,G.W,G.H);
+
+  channelPath(m+FRAME+2); ctx.fillStyle = "#c9d9e4"; ctx.fill("evenodd");
+  channelPath(m); ctx.fillStyle = "#fafafa"; ctx.fill("evenodd");
+  ctx.save(); channelPath(m); ctx.clip("evenodd");
+  // crowding tint
+  const mean = eng.N/eng.nSeg, val = k => (eng.segDensity[SEGS.borrow.has(k)?SEGS.borrow.get(k):k]-mean)/mean;
+  for(let k=0;k<eng.nSeg;k++){ if(SEGS.skip.has(k) || (k >= B0 && k < B1)) continue; const rel = val(k); if(rel <= 0) continue;
+    const rc = segRect(k); ctx.fillStyle = tint(rel); ctx.fillRect(rc[0],rc[1],rc[2],rc[3]); }
+  for(const [cx,cy,a,b] of SEGS.corners){ const rel = ((eng.segDensity[a]+eng.segDensity[b])/2-mean)/mean; if(rel <= 0) continue;
+    ctx.fillStyle = tint(rel); ctx.fillRect(cx-m,cy-m,2*m,2*m); }
+  // resistance: red dots
+  ctx.fillStyle = "rgba(199,31,47,0.55)";
+  for(let x=G.trackX1+7; x<xc-3; x+=11) for(let y=G.B-m+6, j=0; y<=G.B+m-5; y+=8, j++){ ctx.beginPath(); ctx.arc(x+(j%2?4:0),y,1.9,0,6.3); ctx.fill(); }
+  ctx.restore();
+  // battery, as in electricity-overlap: taller than the wire, orange + end, dark body where the push and the resistance both act
+  const bm = G.bm, bw = G.battX2-G.battX1;
+  let g = ctx.createLinearGradient(G.battX1,0,G.capX,0); g.addColorStop(0,"#f6a02c"); g.addColorStop(1,"#fbd94a");
+  ctx.fillStyle = g; ctx.fillRect(G.battX1,G.T-bm,G.capX-G.battX1,2*bm);
+  g = ctx.createLinearGradient(0,G.T-bm,0,G.T+bm); g.addColorStop(0,"#07121d"); g.addColorStop(0.5,"#172838"); g.addColorStop(1,"#07121d");
+  ctx.fillStyle = g; ctx.fillRect(G.capX,G.T-bm,G.battX2-G.capX,2*bm);
+  g = ctx.createLinearGradient(G.capX-3,0,G.capX+3,0); g.addColorStop(0,"#d9b23a"); g.addColorStop(0.5,"#8a7426"); g.addColorStop(1,"#3b3a22");
+  ctx.fillStyle = g; ctx.fillRect(G.capX-3,G.T-bm,6,2*bm);
+  ctx.fillStyle = "#c9d9e4"; ctx.fillRect(G.battX1-BF,G.T-m,BF,2*m); ctx.fillRect(G.battX2,G.T-m,BF,2*m);
+  // resistance: an even lattice of red dots, closer together for a larger r
+  { const wid = G.battX2-G.capX-10, hei = 2*bm-10, sp = Math.sqrt(wid*hei/clamp(c.r/c.k*90, 10, 200));
+    const cols = Math.max(1,Math.round(wid/sp)), rows = Math.max(1,Math.round(hei/sp)), dx = wid/cols, dy = hei/rows;
+    ctx.fillStyle = "#ff5a66";
+    for(let j=0;j<rows;j++) for(let i=0;i<cols;i++){ ctx.beginPath(); ctx.arc(G.capX+5+dx*(i+0.5), G.T-bm+5+dy*(j+0.5), 1.9, 0, 6.3); ctx.fill(); } }
+  for(const ax of [G.capX+10, G.capX+52, G.capX+94]) arrow(ax, G.T, 30, "rgba(255,224,91,0.95)", 4);
+  label("+", (G.battX1+G.capX)/2, G.T+13, {size:40, weight:"700", color:"#000000"});
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(G.battX2-34, G.T-bm+14, 20, 5);
+
+  ammeterLoop(G.L,G.ammLeftY,false); ammeterLoop(G.R,G.ammRightY,false);
+
+  // electrons with short tails
+  for(let h=2;h>=0;h--){ const hs = hist[h], size = ghost.size*GHOST_SCALE[h], half = size/2; ctx.globalAlpha = GHOST_ALPHA[h];
+    for(let i=0;i<eng.N;i++) ctx.drawImage(ghost.img, hs.x[i]-half, hs.y[i]-half, size, size); }
+  ctx.globalAlpha = 1;
+  const half = sprite.size/2;
+  for(let i=0;i<eng.N;i++) ctx.drawImage(sprite.img, eng.x[i]-half, eng.y[i]-half, sprite.size, sprite.size);
+
+  drawFrames();
+
+  if(!app.closed){ // a gap in the right-hand wire
+    const x1 = G.R-m-FRAME-3, w = 2*(m+FRAME+3);
+    ctx.fillStyle = "#fafafa"; ctx.fillRect(x1, G.switchY-6, w, 12);
+    for(const yy of [G.switchY-6, G.switchY+6]){ const grd = ctx.createLinearGradient(0,yy-3,0,yy+3);
+      grd.addColorStop(0,"#254f62"); grd.addColorStop(0.5,"#edf6f8"); grd.addColorStop(1,"#254f62");
+      ctx.fillStyle = grd; ctx.fillRect(x1+3, yy-2, w-6, 4); }
+  }
+
+  ammeterLoop(G.L,G.ammLeftY,true); ammeterLoop(G.R,G.ammRightY,true);
+  const inL = G.L+m+FRAME+12, inR = G.R-m-FRAME-12;
+  label("ammeter 1", inL+2, G.ammLeftY-18, {size:12, color:"#a85555", align:"left", weight:"600"});
+  readout(inL, G.ammLeftY-12, 84, fmt(app.shown.I1)+" A", true);
+  label("ammeter 2", inR-2, G.ammRightY-18, {size:12, color:"#a85555", align:"right", weight:"600"});
+  readout(inR-84, G.ammRightY-12, 84, fmt(app.shown.I2)+" A", true);
+
+  // ----- circuit symbols, beside the parts of the wire they stand for -----
+  ctx.strokeStyle = INK; ctx.fillStyle = INK; ctx.lineWidth = 2; ctx.lineCap = "butt"; ctx.setLineDash([]);
+  // cell with internal resistance
+  const px = 322, nx = 334, rx1 = 366, rx2 = 410, bx1 = 296, bx2 = 436, wx1 = 226, wx2 = 506, jx1 = 250, jx2 = 482;
+  seg(wx1,CY,px,CY); seg(nx,CY,rx1,CY); seg(rx2,CY,wx2,CY);
+  seg(px,CY-18,px,CY+18); ctx.lineWidth = 6; seg(nx,CY-10,nx,CY+10); ctx.lineWidth = 2;
+  ctx.fillStyle = "#fafafa"; ctx.fillRect(rx1,CY-8,rx2-rx1,16); ctx.strokeRect(rx1,CY-8,rx2-rx1,16);
+  ctx.setLineDash([5,4]); ctx.strokeStyle = INK_SOFT; ctx.lineWidth = 1.5; ctx.strokeRect(bx1,CY-38,bx2-bx1,72);
+  ctx.setLineDash([2,4]); ctx.lineWidth = 1; seg(bx1,CY+34,G.battX1-BF,G.T-G.bm-BF); seg(bx2,CY+34,G.battX2+BF,G.T-G.bm-BF); ctx.setLineDash([]);
+  label("ε", (px+nx)/2, CY-22, {sym:true, size:17, weight:"600"});
+  label("r", (rx1+rx2)/2, CY-14, {sym:true, size:17, weight:"600"});
+  label("+", px-9, CY-6, {size:13, weight:"700"}); label("−", nx+11, CY-6, {size:13, weight:"700"});
+  label("cell", bx1+2, CY-43, {size:12, color:INK_SOFT, align:"left"});
+  // voltmeter in parallel with the cell and its internal resistance
+  ctx.strokeStyle = INK; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(jx1,CY); ctx.lineTo(jx1,VY); ctx.lineTo(366-16,VY); ctx.moveTo(366+16,VY); ctx.lineTo(jx2,VY); ctx.lineTo(jx2,CY); ctx.stroke();
+  ctx.fillStyle = INK; for(const x of [jx1,jx2]){ ctx.beginPath(); ctx.arc(x,CY,3.2,0,6.3); ctx.fill(); }
+  ctx.fillStyle = "#ffffff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(366,VY,16,0,6.3); ctx.fill(); ctx.stroke();
+  label("V", 366, VY+5, {weight:"700", size:15});
+  label("terminal p.d.", 176, 19, {size:13, color:INK_SOFT});
+  readout(132, 25, 88, fmt(app.shown.V)+" V", false);
+
+  // variable resistor
+  ctx.strokeStyle = INK; ctx.lineWidth = 2;
+  const WY = RY-46, jx = G.trackX2+20;
+  seg(G.trackX1-33,RY,G.trackX1,RY); seg(G.trackX2,RY,G.trackX2+33,RY);
+  ctx.fillStyle = "#fafafa"; ctx.fillRect(G.trackX1,RY-8,G.trackX2-G.trackX1,16);
+  ctx.fillStyle = "rgba(199,31,47,0.22)"; ctx.fillRect(G.trackX1,RY-8,xc-G.trackX1,16);
+  ctx.strokeRect(G.trackX1,RY-8,G.trackX2-G.trackX1,16);
+  ctx.beginPath(); ctx.moveTo(xc,RY-12); ctx.lineTo(xc,WY); ctx.lineTo(jx,WY); ctx.lineTo(jx,RY); ctx.stroke();
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(jx,RY,2.4,0,6.3); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(xc,RY-8); ctx.lineTo(xc-5.5,RY-19); ctx.lineTo(xc+5.5,RY-19); ctx.closePath(); ctx.fill();
+  // grip: a small tab with arrows either side, to show it slides
+  ctx.fillStyle = dragging ? "#dff0f5" : "#ffffff"; ctx.strokeStyle = "#087da6"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(xc-17,WY-9,34,18,9); ctx.fill(); ctx.stroke();
+  ctx.lineWidth = 1.8; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.beginPath(); ctx.moveTo(xc-6,WY-4); ctx.lineTo(xc-10,WY); ctx.lineTo(xc-6,WY+4); ctx.moveTo(xc+6,WY-4); ctx.lineTo(xc+10,WY); ctx.lineTo(xc+6,WY+4); ctx.stroke();
+  ctx.lineCap = "butt";
+  label("variable resistor"+(explore ? "   R = "+fmt(app.R,1)+" Ω" : ""), (G.trackX1+G.trackX2)/2, G.B+m+FRAME+22, {size:14});
+
+  // switch
+  ctx.strokeStyle = INK; ctx.fillStyle = INK; ctx.lineWidth = 2;
+  seg(SX,G.switchY-46,SX,G.switchY-16); seg(SX,G.switchY+16,SX,G.switchY+46);
+  ctx.beginPath(); ctx.arc(SX,G.switchY-16,3.2,0,6.3); ctx.fill(); ctx.beginPath(); ctx.arc(SX,G.switchY+16,3.2,0,6.3); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(SX,G.switchY+16); if(app.closed) ctx.lineTo(SX,G.switchY-16); else ctx.lineTo(SX+17,G.switchY-10); ctx.stroke();
+  label("switch", SX, G.switchY+64, {size:13}); label(app.closed?"closed":"open", SX, G.switchY+79, {size:13, color:app.closed?INK_SOFT:"#b3541e", weight:"600"});
+
+  if(app.closed){ label("electron flow", 598, G.T-m-FRAME-10, {size:13, color:"#087da6", align:"right"}); arrow(604, G.T-m-FRAME-14, 24, "#087da6", 1.5); }
+
+  // key
+  const kx = 142, ky = 276, chip = (y,fn) => { ctx.fillStyle = "#101f2d"; ctx.beginPath(); ctx.roundRect(kx,y-9,34,18,4); ctx.fill(); fn(y); };
+  chip(ky, y => arrow(kx+6, y, 22, "rgba(255,224,91,0.95)", 2.5));
+  label("the cell's push on electrons (EMF)", kx+42, ky+4, {size:12, align:"left"});
+  ctx.fillStyle = "#e0303f"; for(const [dx,dy] of [[9,-4],[20,-4],[14.5,4],[25.5,4]]){ ctx.beginPath(); ctx.arc(kx+dx,ky+24+dy,1.9,0,6.3); ctx.fill(); }
+  label("resistance", kx+42, ky+28, {size:12, align:"left"});
+  ctx.drawImage(sprite.img, kx+13, ky+48-4, 8, 8);
+  label("electrons (each dot is many)", kx+42, ky+52, {size:12, align:"left"});
+}
+
+/* ---------- loop ---------- */
+let sub = 10, slow = 0;
+function frame(){
+  if(!app.paused){
+    pushHistory();
+    const t0 = performance.now();
+    for(let i=0;i<sub;i++) eng.step();
+    const dt = performance.now()-t0;
+    if(dt > 9){ if(++slow > 20 && sub > 4){ sub--; slow = 0; } } else slow = 0;
+  }
+  draw();
+  requestAnimationFrame(frame);
+}
+
+/* ---------- controls ---------- */
+const rheo = $("rheo");
+function setR(v){ app.R = clamp(v, G.RMIN, G.RMAX); rheo.value = app.R;
+  rheo.setAttribute("aria-valuetext", app.mode==="explore" ? app.R.toFixed(1)+" ohms" : Math.round(app.R/G.RMAX*100)+"% of the track"); refresh(); }
+rheo.addEventListener("input", () => setR(+rheo.value));
+function setSwitch(closed){ app.closed = closed; $("switchBtn").textContent = "Switch: "+(closed?"closed":"open"); $("switchBtn").setAttribute("aria-pressed", String(closed)); refresh(); }
+$("switchBtn").addEventListener("click", () => setSwitch(!app.closed));
+$("pauseBtn").addEventListener("click", () => { app.paused = !app.paused; $("pauseBtn").setAttribute("aria-pressed", String(app.paused)); $("pauseBtn").textContent = app.paused ? "Resume electrons" : "Pause electrons"; });
+function canvasPoint(e){ const b = cv.getBoundingClientRect(); return [(e.clientX-b.left)*G.W/b.width, (e.clientY-b.top)*G.H/b.height]; }
+const onTrack = (x,y) => x>G.trackX1-18 && x<G.trackX2+18 && y>RY-62 && y<RY+14;
+const onSwitch = (x,y) => x>G.R-G.m-FRAME-4 && y>G.switchY-50 && y<G.switchY+84;
+function dragTo(x){ setR(Math.round((x-G.trackX1)/(G.trackX2-G.trackX1)*G.RMAX*10)/10); }
+cv.addEventListener("pointerdown", e => { const [x,y] = canvasPoint(e);
+  if(onTrack(x,y)){ dragging = true; cv.setPointerCapture(e.pointerId); dragTo(x); e.preventDefault(); }
+  else if(onSwitch(x,y)) setSwitch(!app.closed); });
+cv.addEventListener("pointermove", e => { const [x,y] = canvasPoint(e);
+  if(dragging) dragTo(x); else cv.style.cursor = onTrack(x,y) ? "ew-resize" : onSwitch(x,y) ? "pointer" : "default"; });
+cv.addEventListener("pointerup", () => dragging = false); cv.addEventListener("pointercancel", () => dragging = false);
+
+/* ---------- meters: each ammeter has its own scatter ---------- */
+function sampleMeters(){
+  const t = truth(), c = cell(), amp = () => app.closed ? Math.max(0, r2(t.I + gauss()*0.004)) : 0;
+  app.shown.I1 = amp(); app.shown.I2 = amp();
+  app.shown.V = app.mode==="practical" ? Math.max(0, r2(t.V + gauss()*0.006*c.k)) : t.V;
+  $("mI").textContent = fmt(app.shown.I1); $("mV").textContent = fmt(app.shown.V);
+}
+setInterval(sampleMeters, 320);
+
+/* ---------- explore ---------- */
+const cellsEl = $("cells");
+CELLS.forEach(c => { const b = document.createElement("button"); b.className="chip"; b.type="button"; b.setAttribute("role","radio"); b.dataset.id=c.id;
+  b.innerHTML = "<b>"+c.name+"</b><span>ε "+fmt(c.emf)+" V · r "+fmt(c.r)+" Ω</span>";
+  b.addEventListener("click", () => { app.exploreCell = c; refresh(); }); cellsEl.appendChild(b); });
+function refreshExplore(){
+  $("dgLever").setAttribute("d", app.closed ? "M320 198V172" : "M320 198L336 176");
+  $("dgSwitch").textContent = app.closed ? "switch closed" : "switch open";
+  const t = truth(), c = cell();
+  [...cellsEl.children].forEach(b => b.setAttribute("aria-checked", String(b.dataset.id===c.id)));
+  $("barV").style.width = (t.V/c.emf*100)+"%"; $("barL").style.width = (t.lost/c.emf*100)+"%";
+  $("eqE").textContent = fmt(c.emf)+" V"; $("eqV").textContent = fmt(t.V)+" V"; $("eqL").textContent = fmt(t.lost)+" V";
+  $("eqL2").textContent = fmt(t.lost)+" V"; $("eqI").textContent = fmt(t.I)+" A"; $("eqR").textContent = fmt(c.r)+" Ω";
+  $("takeaway").innerHTML = app.closed
+    ? "<b><i>r</i> is still "+fmt(c.r)+" Ω.</b> Changing the variable resistor changes the current, and the lost volts follow the current: "+fmt(t.lost)+" V at "+fmt(t.I)+" A."
+    : "<b>No current, so no lost volts.</b> <i>r</i> is still "+fmt(c.r)+" Ω, but "+fmt(0)+" A × "+fmt(c.r)+" Ω = 0. The terminal p.d. equals the EMF.";
+}
+
+/* ---------- practical ---------- */
+function renderRows(){
+  const tb = $("rows");
+  if(!app.readings.length){ tb.innerHTML = '<tr><td class="empty" colspan="4">No readings yet. Set the variable resistor and press Record reading.</td></tr>'; return; }
+  tb.innerHTML = app.readings.map((p,i) => '<tr><td>'+(i+1)+'</td><td class="num">'+fmt(p.I)+'</td><td class="num">'+fmt(p.V)+'</td><td><button class="btn small" data-del="'+i+'" aria-label="Remove reading '+(i+1)+'">×</button></td></tr>').join("");
+}
+$("rows").addEventListener("click", e => { const b = e.target.closest("[data-del]"); if(!b) return; app.readings.splice(+b.dataset.del,1); afterData(); });
+$("recordBtn").addEventListener("click", () => { if(app.readings.length >= 24) return; app.readings.push({I:app.shown.I1, V:app.shown.V}); afterData();
+  const w = $("rows").closest(".tbl-wrap"); w.scrollTop = w.scrollHeight; });
+$("clearBtn").addEventListener("click", () => { app.readings = []; app.line = null; afterData(); });
+$("newCell").addEventListener("click", () => { newMystery(); app.readings = []; app.line = null; app.checked = false; $("ansE").value = ""; $("ansR").value = ""; $("verdict").innerHTML = ""; refresh(); afterData(); });
+function afterData(){ renderRows(); renderGraph(); $("recordBtn").disabled = app.readings.length >= 24; }
+
+/* ---------- graph paper (shared by both modes) ---------- */
+const gs = {W:640,H:420,l:62,r:18,t:16,b:50, xm:1, y1:1.8, xMajor:0.1, xMinor:0.02, yMajor:0.2, yMinor:0.05};
+const Y_MINOR = {0.1:0.02, 0.2:0.05, 0.5:0.1, 1:0.2, 2:0.5, 5:1};
+function scales(){
+  let target;
+  if(app.mode==="explore"){ gs.xm = 2; target = 1.5*1.15; }
+  else { const maxI = app.readings.reduce((m,p) => Math.max(m,p.I), 0);
+    gs.xm = [0.5,1,1.5,2,2.5].find(v => v >= maxI*1.04) || 2.5; target = app.mystery.emf*1.15; }
+  gs.yMajor = [0.1,0.2,0.5,1,2,5].find(m => target/m <= 9); gs.yMinor = Y_MINOR[gs.yMajor];
+  gs.y1 = Math.ceil(target/gs.yMajor - 1e-9)*gs.yMajor;
+  gs.xMajor = gs.xm <= 1 ? 0.1 : gs.xm <= 1.5 ? 0.25 : 0.5; gs.xMinor = gs.xm <= 1 ? 0.02 : 0.05;
+  if(app.line){ const c = app.line; c.c = clamp(c.c, 0, gs.y1); const ye = clamp(c.c + c.m*gs.xm, 0, gs.y1); c.m = (ye-c.c)/gs.xm; }
+}
+const GX = v => gs.l + v/gs.xm*(gs.W-gs.l-gs.r), GY = v => gs.H-gs.b - v/gs.y1*(gs.H-gs.t-gs.b);
+const n1 = v => +v.toFixed(2);
+function cross(I,V,w){ const x=n1(GX(I)), y=n1(GY(V)); return '<path d="M'+(x-5.5)+' '+(y-5.5)+'L'+(x+5.5)+' '+(y+5.5)+'M'+(x-5.5)+' '+(y+5.5)+'L'+(x+5.5)+' '+(y-5.5)+'" stroke="var(--point)" stroke-width="'+w+'" stroke-linecap="round" fill="none"/>'; }
+function renderGraph(){
+  scales();
+  const explore = app.mode==="explore", n = n1, right = gs.W-gs.r, bottom = gs.H-gs.b;
+  let s = "";
+  for(let i=0; i<=Math.round(gs.xm/gs.xMinor); i++){ const v=i*gs.xMinor, maj = Math.abs(v/gs.xMajor-Math.round(v/gs.xMajor))<1e-6;
+    s += '<line x1="'+n(GX(v))+'" x2="'+n(GX(v))+'" y1="'+gs.t+'" y2="'+bottom+'" stroke="var('+(maj?"--grid-major":"--grid")+')" stroke-width="'+(maj?1:0.6)+'"/>';
+    if(maj) s += '<text x="'+n(GX(v))+'" y="'+(bottom+17)+'" font-size="12" text-anchor="middle" fill="var(--fg)">'+v.toFixed(gs.xMajor===0.25?2:1)+'</text>'; }
+  for(let i=0; i<=Math.round(gs.y1/gs.yMinor); i++){ const v=i*gs.yMinor, k=v/gs.yMajor, maj = Math.abs(k-Math.round(k))<1e-6;
+    s += '<line x1="'+gs.l+'" x2="'+right+'" y1="'+n(GY(v))+'" y2="'+n(GY(v))+'" stroke="var('+(maj?"--grid-major":"--grid")+')" stroke-width="'+(maj?1:0.6)+'"/>';
+    if(maj) s += '<text x="'+(gs.l-8)+'" y="'+n(GY(v)+4)+'" font-size="12" text-anchor="end" fill="var(--fg)">'+v.toFixed(1)+'</text>'; }
+  s += '<line x1="'+gs.l+'" x2="'+gs.l+'" y1="'+gs.t+'" y2="'+bottom+'" stroke="var(--fg)" stroke-width="1.5"/><line x1="'+gs.l+'" x2="'+right+'" y1="'+bottom+'" y2="'+bottom+'" stroke="var(--fg)" stroke-width="1.5"/>';
+  s += '<text x="'+((gs.l+right)/2)+'" y="'+(gs.H-10)+'" font-size="13" text-anchor="middle" fill="var(--fg)">current I / A</text>';
+  s += '<text transform="translate(16 '+((gs.t+bottom)/2)+') rotate(-90)" font-size="13" text-anchor="middle" fill="var(--fg)">terminal p.d. V / V</text>';
+  if(explore){
+    const c = cell(), t = truth(), xe = Math.min(gs.xm, c.emf/c.r), x = n(GX(t.I)), flip = t.I > 1.35, tx = flip ? x-10 : x+10, anchor = flip ? "end" : "start";
+    s += '<line x1="'+gs.l+'" x2="'+right+'" y1="'+n(GY(c.emf))+'" y2="'+n(GY(c.emf))+'" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="7 5"/>';
+    s += '<text class="halo" x="'+(gs.l+10)+'" y="'+n(GY(c.emf)-8)+'" font-size="12" fill="var(--muted)">EMF ε = '+fmt(c.emf)+' V</text>';
+    s += '<text class="halo" x="'+(right-8)+'" y="'+n(GY(c.emf)-8)+'" font-size="12" text-anchor="end" fill="var(--accent)">gradient = −r = −'+fmt(c.r)+' Ω</text>';
+    s += '<line x1="'+n(GX(0))+'" y1="'+n(GY(c.emf))+'" x2="'+n(GX(xe))+'" y2="'+n(GY(c.emf-c.r*xe))+'" stroke="var(--accent)" stroke-width="2.5"/>';
+    if(app.closed){
+      s += '<line x1="'+x+'" x2="'+x+'" y1="'+bottom+'" y2="'+n(GY(t.V))+'" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 4"/>';
+      s += '<line x1="'+x+'" x2="'+x+'" y1="'+n(GY(t.V))+'" y2="'+n(GY(c.emf))+'" stroke="var(--lost)" stroke-width="5"/>';
+      s += '<text class="halo" x="'+tx+'" y="'+n(GY(t.V/2)+4)+'" font-size="12" text-anchor="'+anchor+'" fill="var(--accent)">terminal p.d. '+fmt(t.V)+' V</text>';
+      s += '<text class="halo" x="'+tx+'" y="'+n(Math.max(GY((t.V+c.emf)/2)+4, GY(c.emf)+15))+'" font-size="12" font-weight="600" text-anchor="'+anchor+'" fill="var(--lost)">lost volts '+fmt(t.lost)+' V</text>';
+    } else s += '<text class="halo" x="'+(x+14)+'" y="'+n(GY(c.emf)+20)+'" font-size="12" fill="var(--lost)">no current, no lost volts</text>';
+    s += '<circle cx="'+x+'" cy="'+n(GY(t.V))+'" r="9" fill="var(--paper)" stroke="var(--point)" stroke-width="2"/>' + cross(t.I,t.V,2.4);
+  } else {
+    if(app.checked && app.mystery){ const m = app.mystery, xe = Math.min(gs.xm, m.emf/m.r), xl = xe*0.5;
+      s += '<line x1="'+n(GX(0))+'" y1="'+n(GY(m.emf))+'" x2="'+n(GX(xe))+'" y2="'+n(GY(m.emf-m.r*xe))+'" stroke="var(--ok)" stroke-width="2" stroke-dasharray="7 5"/>';
+      s += '<text class="halo" x="'+n(GX(xl)+10)+'" y="'+n(GY(m.emf-m.r*xl)-10)+'" font-size="12" fill="var(--ok)">the cell\'s true line</text>'; }
+    if(app.line){ const c = app.line;
+      s += '<line x1="'+n(GX(0))+'" y1="'+n(GY(c.c))+'" x2="'+n(GX(gs.xm))+'" y2="'+n(GY(c.c + c.m*gs.xm))+'" stroke="var(--accent)" stroke-width="2"/>'; }
+    for(const p of app.readings) s += cross(p.I,p.V,2.4);
+    if(app.line){ const c = app.line, ye = c.c + c.m*gs.xm;
+      s += '<circle class="handle" data-h="0" tabindex="0" role="slider" aria-label="Line of best fit: left end" aria-valuenow="'+c.c.toFixed(3)+'" cx="'+n(GX(0))+'" cy="'+n(GY(c.c))+'" r="9" fill="var(--accent)" stroke="var(--paper)" stroke-width="2.5"/>';
+      s += '<circle class="handle" data-h="1" tabindex="0" role="slider" aria-label="Line of best fit: right end" aria-valuenow="'+ye.toFixed(3)+'" cx="'+n(GX(gs.xm))+'" cy="'+n(GY(ye))+'" r="9" fill="var(--accent)" stroke="var(--paper)" stroke-width="2.5"/>'; }
+    if(!app.readings.length) s += '<text x="'+((gs.l+right)/2)+'" y="'+((gs.t+bottom)/2)+'" font-size="14" text-anchor="middle" fill="var(--muted)">Record a reading to plot your first point</text>';
+  }
+  $("graph").innerHTML = s;
+  $("lineBtn").hidden = explore;
+  $("lineBtn").textContent = app.line ? "Remove line" : "Add line of best fit";
+  $("lineBtn").disabled = !app.line && app.readings.length < 2;
+  $("graphNote").textContent = explore
+    ? "The cross shows this circuit now. It slides along the cell's line as you change the variable resistor. The line itself, and its gradient, only change when you change the cell."
+    : "Points appear here as you record them. Drag the two round handles to place your line of best fit.";
+}
+$("lineBtn").addEventListener("click", () => {
+  if(app.line) app.line = null;
+  else { const mean = app.readings.reduce((a,p) => a+p.V, 0)/app.readings.length; app.line = {c:mean, m:0}; }
+  renderGraph();
+});
+const graph = $("graph"); let hDrag = null;
+function setHandle(h, v){
+  const c = app.line; if(!c) return; v = clamp(v, 0, gs.y1);
+  if(h === 0){ const ye = c.c + c.m*gs.xm; c.c = v; c.m = (ye-v)/gs.xm; } else c.m = (v-c.c)/gs.xm;
+}
+function graphV(e){ const b = graph.getBoundingClientRect(); const y = (e.clientY-b.top)*gs.H/b.height; return (gs.H-gs.b-y)/(gs.H-gs.t-gs.b)*gs.y1; }
+graph.addEventListener("pointerdown", e => { const h = e.target.closest("[data-h]"); if(!h) return; hDrag = +h.dataset.h; graph.setPointerCapture(e.pointerId); e.preventDefault(); });
+graph.addEventListener("pointermove", e => { if(hDrag === null) return; setHandle(hDrag, graphV(e)); renderGraph(); });
+const endDrag = () => { hDrag = null; }; graph.addEventListener("pointerup", endDrag); graph.addEventListener("pointercancel", endDrag);
+graph.addEventListener("keydown", e => { const h = e.target.closest && e.target.closest("[data-h]"); if(!h || !app.line) return;
+  const d = e.key==="ArrowUp" ? 1 : e.key==="ArrowDown" ? -1 : 0; if(!d) return; e.preventDefault();
+  const i = +h.dataset.h, cur = i===0 ? app.line.c : app.line.c + app.line.m*gs.xm;
+  setHandle(i, cur + d*gs.y1*(e.shiftKey?0.01:0.0025)); renderGraph();
+  const again = graph.querySelector('[data-h="'+i+'"]'); if(again) again.focus(); });
+
+/* checking */
+function leastSquares(pts){ const n = pts.length; if(n < 2) return null;
+  let sx=0,sy=0,sxx=0,sxy=0; for(const p of pts){ sx+=p.I; sy+=p.V; sxx+=p.I*p.I; sxy+=p.I*p.V; }
+  const d = n*sxx - sx*sx; if(Math.abs(d) < 1e-9) return null; const m = (n*sxy - sx*sy)/d; return {emf:(sy - m*sx)/n, r:-m}; }
+function grade(pct, okAt, nearAt){ const a = Math.abs(pct); return a <= okAt ? ["ok","Close"] : a <= nearAt ? ["warn","Near"] : ["bad","Off"]; }
+$("answers").addEventListener("submit", e => {
+  e.preventDefault();
+  const out = $("verdict"), E = parseFloat($("ansE").value.replace(",", ".")), Rr = parseFloat($("ansR").value.replace(",", "."));
+  if(!isFinite(E) || !isFinite(Rr)){ out.innerHTML = '<p class="note">Enter a number for both the EMF and the internal resistance.</p>'; return; }
+  if(app.readings.length < 2){ out.innerHTML = '<p class="note">Record at least two readings first, so you have a line to measure.</p>'; return; }
+  const m = app.mystery, pe = (E-m.emf)/m.emf*100, pr = (Rr-m.r)/m.r*100, ge = grade(pe,2,5), gr = grade(pr,8,20);
+  const pts = app.readings, Is = pts.map(p => p.I), span = Math.max(...Is)-Math.min(...Is), full = m.emf/(G.RMIN*m.k+m.r) - m.emf/(G.RMAX*m.k+m.r);
+  const tips = [];
+  if(Rr < 0) tips.push("The gradient of the line is negative, and it equals −<i>r</i>. The internal resistance itself is positive.");
+  if(pts.length < 6) tips.push("You used "+pts.length+" readings. Six or more make the line of best fit more reliable.");
+  if(span < 0.5*full) tips.push("Your currents only cover "+fmt(span)+" Amps. A wider spread pins down the gradient better.");
+  if(!app.line) tips.push("You did not draw a line of best fit. Use one, so a single odd reading does not decide your answer.");
+  if(Math.abs(pr) > 8 && Math.abs(pe) <= 2) tips.push("Your EMF is good, so check the gradient: use a large triangle, and read both ends from the line, not from points.");
+  const ls = leastSquares(pts);
+  app.checked = true;
+  out.innerHTML =
+    '<div class="tbl-wrap"><table><thead><tr><th></th><th>Yours</th><th>Actual</th><th>Difference</th><th></th></tr></thead><tbody>'+
+    '<tr><td style="text-align:left">EMF / V</td><td class="num">'+fmt(E)+'</td><td class="num">'+fmt(m.emf)+'</td><td class="num">'+(pe>=0?"+":"−")+fmt(Math.abs(pe),1)+'%</td><td><span class="st '+ge[0]+'">'+ge[1]+'</span></td></tr>'+
+    '<tr><td style="text-align:left"><i>r</i> / Ω</td><td class="num">'+fmt(Rr)+'</td><td class="num">'+fmt(m.r)+'</td><td class="num">'+(pr>=0?"+":"−")+fmt(Math.abs(pr),1)+'%</td><td><span class="st '+gr[0]+'">'+gr[1]+'</span></td></tr>'+
+    '</tbody></table></div>'+
+    (ls ? '<p class="note">A computer\'s line of best fit through your points gives ε = '+fmt(ls.emf)+' V and <i>r</i> = '+fmt(ls.r)+' Ω.</p>' : '')+
+    (tips.length ? '<ul>'+tips.map(t => "<li>"+t+"</li>").join("")+'</ul>' : '')+
+    '<p class="note">The intercept is the EMF because no current means no lost volts. The gradient is −<i>r</i>, and it is the same all along the line: <i>r</i> did not change, only the current did.</p>';
+  renderGraph();
+});
+
+/* ---------- mode ---------- */
+function setMode(mode, push){
+  app.mode = mode;
+  for(const m of ["explore","practical"]){ $("tab-"+m).setAttribute("aria-selected", String(m===mode)); $("view-"+m).hidden = m!==mode; }
+  if(push){ try{ history.replaceState(null,"","#"+mode); }catch(_){ location.hash = mode; } }
+  refresh(); if(mode==="practical") afterData();
+}
+$("tab-explore").addEventListener("click", () => setMode("explore", true));
+$("tab-practical").addEventListener("click", () => setMode("practical", true));
+window.addEventListener("hashchange", () => setMode(location.hash==="#practical" ? "practical" : "explore", false));
+function refresh(){
+  syncEngine(); sampleMeters();
+  $("cellName").textContent = "Mystery cell "+app.mystery.tag;
+  if(app.mode==="explore"){ refreshExplore(); renderGraph(); }
+}
+
+if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches){ app.paused = true; $("pauseBtn").setAttribute("aria-pressed","true"); $("pauseBtn").textContent = "Resume electrons"; }
+syncEngine();
+for(let i=0;i<2500;i++) eng.step(); // settle before the first frame
+for(const h of hist){ h.x.set(eng.x); h.y.set(eng.y); }
+sizeCanvas(); window.addEventListener("resize", sizeCanvas);
+setMode(location.hash==="#practical" ? "practical" : "explore", false);
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
