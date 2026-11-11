@@ -831,7 +831,8 @@ function renderGraph(){
     const c = cell(), t = truth(), xe = Math.min(gs.xm, c.emf/c.r), x = n(GX(t.I)), flip = t.I > 1.35, tx = flip ? x-10 : x+10, anchor = flip ? "end" : "start";
     s += '<line x1="'+gs.l+'" x2="'+right+'" y1="'+n(GY(c.emf))+'" y2="'+n(GY(c.emf))+'" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="7 5"/>';
     s += '<text class="halo" x="'+(gs.l+10)+'" y="'+n(GY(c.emf)-8)+'" font-size="12" fill="var(--muted)">EMF ε = '+fmt(c.emf)+' V</text>';
-    s += '<text class="halo" x="'+(right-8)+'" y="'+n(GY(c.emf)-8)+'" font-size="12" text-anchor="end" fill="var(--accent)">gradient = −r = −'+fmt(c.r)+' Ω</text>';
+    { const xl = xe*0.62, ang = Math.atan2(GY(c.emf-c.r*xe)-GY(c.emf), GX(xe)-GX(0))*180/Math.PI;
+      s += '<text class="halo" transform="translate('+n(GX(xl))+' '+n(GY(c.emf-c.r*xl))+') rotate('+n(ang)+')" x="0" y="24" font-size="12" text-anchor="middle" fill="var(--accent)">gradient = −r = −'+fmt(c.r)+' Ω</text>'; }
     s += '<line x1="'+n(GX(0))+'" y1="'+n(GY(c.emf))+'" x2="'+n(GX(xe))+'" y2="'+n(GY(c.emf-c.r*xe))+'" stroke="var(--accent)" stroke-width="2.5"/>';
     if(app.closed){
       s += '<line x1="'+x+'" x2="'+x+'" y1="'+bottom+'" y2="'+n(GY(t.V))+'" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 4"/>';
