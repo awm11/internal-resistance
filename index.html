@@ -106,6 +106,7 @@ h2{font-family:var(--f-display);font-weight:600;font-size:1.35rem;line-height:1.
 .eqn{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);column-gap:6px;row-gap:4px;align-items:center;justify-items:center;padding:16px 12px 14px;border-radius:10px;background:var(--surface-2);border-bottom:4px solid var(--line)}
 .eqn .s{font-family:var(--f-sym);font-style:italic;font-weight:600;font-size:clamp(2.3rem,3.6vw,3rem);line-height:1.05}
 .eqn .n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600;font-size:clamp(1.15rem,1.75vw,1.5rem);white-space:nowrap}
+.eqn .u i{font-family:var(--f-sym);text-transform:none;letter-spacing:0;font-size:1.15em}
 .eqn .u{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;font-size:.8rem;font-weight:600;color:var(--muted);text-align:center;line-height:1.2}
 .eqn .op{font-family:var(--f-mono);font-weight:600;font-size:1.5rem;color:var(--muted)}
 .eqn .c-v{color:var(--accent)} .eqn .c-l{color:var(--lost)} .eqn .c-i{color:var(--point)}
@@ -204,6 +205,17 @@ td.empty{text-align:left;color:var(--muted);white-space:normal}
           <span class="u">lost volts</span><span></span><span class="u">current</span><span></span><span class="u">internal resistance <span class="pill">fixed</span></span>
         </div>
         <p class="takeaway" id="takeaway"></p>
+      </div>
+      <div class="panel">
+        <h2>Where the power goes</h2>
+        <p class="note">Multiply each term of <i>ε</i> = <i>V</i> + <i>Ir</i> by the current <i>I</i>.</p>
+        <div class="bar" aria-hidden="true"><div class="v" id="pbarR"></div><div class="l" id="pbarr"></div></div>
+        <div class="eqn">
+          <span class="s">Iε</span><span class="op">=</span><span class="s c-v">I²R</span><span class="op">+</span><span class="s c-l">I²r</span>
+          <span class="n" id="pE"></span><span class="op">=</span><span class="n c-v" id="pR"></span><span class="op">+</span><span class="n c-l" id="pr"></span>
+          <span class="u">supplied by the cell</span><span></span><span class="u">delivered to <i>R</i></span><span></span><span class="u">wasted in the cell</span>
+        </div>
+        <p class="note" id="pNote"></p>
       </div>
       <div class="panel">
         <div class="label">Try this</div>
@@ -811,6 +823,11 @@ function refreshExplore(){
   $("barV").style.width = (t.V/c.emf*100)+"%"; $("barL").style.width = (t.lost/c.emf*100)+"%";
   $("eqE").textContent = fmt(c.emf)+" V"; $("eqV").textContent = fmt(t.V)+" V"; $("eqL").textContent = fmt(t.lost)+" V";
   $("eqL2").textContent = fmt(t.lost)+" V"; $("eqI").textContent = fmt(t.I)+" A"; $("eqR").textContent = fmt(c.r)+" Ω";
+  { const Re = app.R*c.k, PR = t.I*t.I*Re, Pr = t.I*t.I*c.r, P = PR + Pr;
+    $("pE").textContent = fmt(P,3)+" W"; $("pR").textContent = fmt(PR,3)+" W"; $("pr").textContent = fmt(Pr,3)+" W";
+    $("pbarR").style.width = (P > 1e-6 ? PR/P*100 : 0)+"%"; $("pbarr").style.width = (P > 1e-6 ? Pr/P*100 : 0)+"%";
+    $("pNote").innerHTML = P < 0.0005 ? "No current, so no power is supplied or wasted."
+      : Math.round(Pr/P*100)+"% of the power the cell supplies is wasted heating the cell itself. Lower <i>R</i> raises the current, and the wasted share grows."; }
   $("takeaway").innerHTML = t.I > 0.005
     ? "<b><i>r</i> is still "+fmt(c.r)+" Ω.</b> Changing the variable resistor changes the current, and the lost volts follow the current: "+fmt(t.lost)+" V at "+fmt(t.I)+" A."
     : "<b>No current, so no lost volts.</b> <i>r</i> is still "+fmt(c.r)+" Ω, but "+fmt(0)+" A × "+fmt(c.r)+" Ω = 0. The terminal p.d. equals the EMF.";
