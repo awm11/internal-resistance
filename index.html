@@ -527,7 +527,8 @@ function syncEngine(){
 }
 
 /* ---------- canvas ---------- */
-const cv = $("sim"), ctx = cv.getContext("2d");
+const cv = $("sim"), mainCtx = cv.getContext("2d");
+let ctx = mainCtx; // drawing helpers use ctx; it is pointed at an offscreen canvas while the frame cache is built
 let dpr = 1;
 function sizeCanvas(){
   const w = cv.clientWidth || G.W;
@@ -599,14 +600,13 @@ function framePass(name){
   ctx.strokeStyle = "#f9feff"; ctx.lineWidth = 0.45; edge(() => outerR(-1.2)); edge(() => innerR(-1.2));
 }
 const BF = 8; // battery frame thickness
-function drawFrames(){
+function paintFrames(includeRes){
   ctx.lineJoin = "miter";
   const bx = VBX1-BF, by = G.T-VBM-BF, bw = VBX2-VBX1+2*BF, bh = 2*VBM+2*BF;
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,G.W,G.H); ctx.rect(bx,by,bw,bh); ctx.clip("evenodd");
-  framePass("wire");
-  const xc = eng.trackContactX();
-  if(xc > G.trackX1+1){ ctx.save(); ctx.beginPath(); ctx.rect(G.trackX1, G.B-40, xc-G.trackX1, 80); ctx.clip(); framePass("res"); ctx.restore(); }
+  framePass(includeRes ? "res" : "wire");
   ctx.restore();
+  if(includeRes) return;
   // gold frame right round the battery, open where the wires join
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,G.W,G.H); ctx.rect(bx-2,G.T-VM,BF+3,2*VM); ctx.rect(VBX2-1,G.T-VM,BF+3,2*VM); ctx.clip("evenodd");
   const steps = 20;
@@ -617,6 +617,27 @@ function drawFrames(){
   ctx.strokeStyle = "rgba(255,243,204,0.8)"; ctx.lineWidth = 0.8; ctx.strokeRect(VBX1+0.5,G.T-VBM+0.5,VBX2-VBX1-1,2*VBM-1);
   ctx.restore();
   ctx.fillStyle = "#e9cf8f"; for(const x of [bx, VBX2]) for(const y of [G.T-VM-FRAME, G.T+VM]){ ctx.beginPath(); ctx.roundRect(x,y,BF,FRAME,2); ctx.fill(); }
+}
+/* The frames never change (only how much of the red rheostat frame shows), so they are painted once into two
+   offscreen canvases at the current resolution and copied each frame. */
+const frameCache = {wire:null, res:null, dpr:0};
+function buildFrameCache(){
+  for(const key of ["wire","res"]){
+    const off = document.createElement("canvas"); off.width = cv.width; off.height = cv.height;
+    ctx = off.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0);
+    paintFrames(key === "res");
+    frameCache[key] = off;
+  }
+  ctx = mainCtx; frameCache.dpr = dpr;
+}
+function drawFrames(){
+  if(frameCache.dpr !== dpr || !frameCache.wire) buildFrameCache();
+  ctx.save(); ctx.setTransform(1,0,0,1,0,0);
+  ctx.drawImage(frameCache.wire, 0, 0);
+  const xc = eng.trackContactX();
+  if(xc > G.trackX1+1){ const sx = G.trackX1*dpr, sy = (G.B-40)*dpr, sw = (xc-G.trackX1)*dpr, sh = 80*dpr;
+    ctx.drawImage(frameCache.res, sx, sy, sw, sh, sx, sy, sw, sh); }
+  ctx.restore();
 }
 function segRect(k){
   const S=eng.SEG, s=k*S, o=VM;
