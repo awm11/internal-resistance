@@ -560,7 +560,7 @@ function pushHistory(){ const last = hist.pop(); last.x.set(eng.x); last.y.set(e
    red frame where there is resistance, gold battery with a dark interior. */
 /* Same geometry as electricity-overlap: a 4.8 px frame, and an electron's centre never closer than 7.35 px to the outside of
    the wire (one wall cell plus its radius), which leaves a small visible gap between electrons and the frame. */
-const FRAME = 4.8, GAP = 5.5, VM = G.m + GAP, VBM = G.bm + GAP, W_ = G.R-G.L, H_ = G.B-G.T;
+const FRAME = 4.8, GAP = 3, VM = G.m + GAP, VBM = G.bm + GAP, W_ = G.R-G.L, H_ = G.B-G.T;
 const VBX1 = G.battX1 - GAP, VBX2 = G.battX2 + GAP;
 const VY = 38, CY = 104, RY = 444, SX = 700;      // voltmeter row, cell symbol row, rheostat symbol row, switch symbol x
 const PROFILES = {
@@ -578,17 +578,25 @@ function profileColour(name, t){
   return P[P.length-1];
 }
 function channelPath(d){ ctx.beginPath(); ctx.rect(G.L-d,G.T-d,W_+2*d,H_+2*d); ctx.rect(G.L+d,G.T+d,W_-2*d,H_-2*d); }
-function strokeRing(d){ ctx.strokeRect(G.L-d,G.T-d,W_+2*d,H_+2*d); ctx.strokeRect(G.L+d,G.T+d,W_-2*d,H_-2*d); }
+/* Ported from electricity-overlap's drawWire: 32 nested rounded rings (corner radius 2) filled with the frame profile,
+   then the crisp dark outside edge, the recessed lip and the fine highlight. Done once for the outside wall of the loop
+   and once, mirrored, for the inside wall. */
+const CR = 2;
+function rr(x,y,w,h){ ctx.roundRect(x,y,w,h,CR); }
+function outerR(d){ rr(G.L-VM-d, G.T-VM-d, W_+2*VM+2*d, H_+2*VM+2*d); }   // d outward from the electrons' edge
+function innerR(d){ rr(G.L+VM+d, G.T+VM+d, W_-2*VM-2*d, H_-2*VM-2*d); }
 function framePass(name){
-  const steps = 32; // fine nested rings, as drawWire does, so the bevel is continuous
+  const steps = 32;
   for(let i=0;i<steps;i++){
-    const t = (i+0.5)/steps;
-    ctx.strokeStyle = profileColour(name, t); ctx.lineWidth = FRAME/steps + 0.3;
-    strokeRing(VM + FRAME*(1-t));
+    const a = FRAME*(1 - i/steps), b = FRAME*(1 - (i+1)/steps);  // i = 0 is the outside of the frame
+    ctx.fillStyle = profileColour(name, (i+0.5)/steps);
+    ctx.beginPath(); outerR(a); outerR(b); ctx.fill("evenodd");
+    ctx.beginPath(); innerR(b); innerR(a); ctx.fill("evenodd");
   }
-  ctx.strokeStyle = name==="wire" ? "#28566d" : "#5b0911"; ctx.lineWidth = 0.69; strokeRing(VM+FRAME-0.6);  // crisp dark outside edge
-  ctx.strokeStyle = name==="wire" ? "#3d6778" : "#8a1520"; ctx.lineWidth = 0.96; strokeRing(VM-0.48);      // recessed lip at the inner edge
-  ctx.strokeStyle = "#f9feff"; ctx.lineWidth = 0.45; strokeRing(VM-1.2);                                     // fine highlight just inside it
+  const edge = fn => { ctx.beginPath(); fn(); ctx.stroke(); };
+  ctx.strokeStyle = name==="wire" ? "#28566d" : "#5b0911"; ctx.lineWidth = 0.69; edge(() => outerR(FRAME-0.6)); edge(() => innerR(FRAME-0.6));
+  ctx.strokeStyle = name==="wire" ? "#3d6778" : "#8a1520"; ctx.lineWidth = 0.96; edge(() => outerR(-0.48)); edge(() => innerR(-0.48));
+  ctx.strokeStyle = "#f9feff"; ctx.lineWidth = 0.45; edge(() => outerR(-1.2)); edge(() => innerR(-1.2));
 }
 const BF = 8; // battery frame thickness
 function drawFrames(){
