@@ -949,7 +949,7 @@ $("answers").addEventListener("submit", e => {
   const m = app.mystery, pe = (E-m.emf)/m.emf*100, pr = (Rr-m.r)/m.r*100, ge = grade(pe,2,5), gr = grade(pr,8,20);
   const pts = app.readings, Is = pts.map(p => p.I), span = Math.max(...Is)-Math.min(...Is), full = m.emf/(G.RMIN*m.k+m.r) - m.emf/(G.RMAX*m.k+m.r);
   const tips = [];
-  if(Rr < 0) tips.push("The gradient of the line is negative, and it equals −<i>r</i><span class="tuck">.</span> The internal resistance itself is positive.");
+  if(Rr < 0) tips.push("The gradient of the line is negative, and it equals −<i>r</i><span class=\"tuck\">.</span> The internal resistance itself is positive.");
   if(pts.length < 6) tips.push("You used "+pts.length+" readings. Six or more make the line of best fit more reliable.");
   if(span < 0.5*full) tips.push("Your currents only cover "+fmt(span)+" Amps. A wider spread pins down the gradient better.");
   if(!app.line) tips.push("You did not draw a line of best fit. Use one, so a single odd reading does not decide your answer.");
