@@ -77,6 +77,9 @@ h2{font-family:var(--f-display);font-weight:600;font-size:1.35rem;line-height:1.
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:12px;min-width:0}
 .label{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.1em;font-size:.8rem;font-weight:600;color:var(--muted)}
 .label i{text-transform:none;letter-spacing:0;font-family:var(--f-body);font-size:1.15em}
+/* italic symbols in running text lean into the following space; give them a little more room */
+p i,li i,label i,td i,th i{padding-right:.14em}
+.tuck{margin-left:-.14em} /* punctuation straight after an italic symbol keeps its normal spacing */
 .note{font-size:.9rem;color:var(--muted);margin:0}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .row.between{justify-content:space-between}
@@ -208,7 +211,7 @@ td.empty{text-align:left;color:var(--muted);white-space:normal}
       </div>
       <div class="panel">
         <h2>Where the power goes</h2>
-        <p class="note">Multiply each term of <i>ε</i> = <i>V</i> + <i>Ir</i> by the current <i>I</i>.</p>
+        <p class="note">Multiply each term of <i>ε</i> = <i>V</i> + <i>Ir</i> by the current <i>I</i><span class="tuck">.</span></p>
         <div class="bar" aria-hidden="true"><div class="v" id="pbarR"></div><div class="l" id="pbarr"></div></div>
         <div class="eqn">
           <span class="s">Iε</span><span class="op">=</span><span class="s c-v">I²R</span><span class="op">+</span><span class="s c-l">I²r</span>
@@ -222,7 +225,7 @@ td.empty{text-align:left;color:var(--muted);white-space:normal}
         <ul class="try">
           <li>Open the switch. With no current there are no lost volts, so the voltmeter reads the EMF.</li>
           <li>Turn the resistance down. The current rises, and so do the lost volts. Did <i>r</i> change?</li>
-          <li>Swap to the old cell at the same resistor setting. Same EMF, bigger <i>r</i>: what happens to the terminal p.d.?</li>
+          <li>Swap to the old cell at the same resistor setting. Same EMF, bigger <i>r</i><span class="tuck">:</span> what happens to the terminal p.d.?</li>
         </ul>
       </div>
       <div class="panel">
@@ -286,7 +289,7 @@ td.empty{text-align:left;color:var(--muted);white-space:normal}
       </div>
       <div class="panel">
         <h2>Your results</h2>
-        <p class="note"><i>V</i> = <i>ε</i> − <i>Ir</i>, so the graph is a straight line. What do its intercept and gradient tell you?</p>
+        <p class="note"><i>V</i> = <i>ε</i> − <i>Ir</i><span class="tuck">,</span> so the graph is a straight line. What do its intercept and gradient tell you?</p>
         <form id="answers" class="col" style="gap:10px">
           <div class="field"><label for="ansE">EMF, <i>ε</i></label><input id="ansE" inputmode="decimal" autocomplete="off"><span>V</span></div>
           <div class="field"><label for="ansR">Internal resistance, <i>r</i></label><input id="ansR" inputmode="decimal" autocomplete="off"><span>Ω</span></div>
@@ -946,7 +949,7 @@ $("answers").addEventListener("submit", e => {
   const m = app.mystery, pe = (E-m.emf)/m.emf*100, pr = (Rr-m.r)/m.r*100, ge = grade(pe,2,5), gr = grade(pr,8,20);
   const pts = app.readings, Is = pts.map(p => p.I), span = Math.max(...Is)-Math.min(...Is), full = m.emf/(G.RMIN*m.k+m.r) - m.emf/(G.RMAX*m.k+m.r);
   const tips = [];
-  if(Rr < 0) tips.push("The gradient of the line is negative, and it equals −<i>r</i>. The internal resistance itself is positive.");
+  if(Rr < 0) tips.push("The gradient of the line is negative, and it equals −<i>r</i><span class="tuck">.</span> The internal resistance itself is positive.");
   if(pts.length < 6) tips.push("You used "+pts.length+" readings. Six or more make the line of best fit more reliable.");
   if(span < 0.5*full) tips.push("Your currents only cover "+fmt(span)+" Amps. A wider spread pins down the gradient better.");
   if(!app.line) tips.push("You did not draw a line of best fit. Use one, so a single odd reading does not decide your answer.");
@@ -960,7 +963,7 @@ $("answers").addEventListener("submit", e => {
     '</tbody></table></div>'+
     (ls ? '<p class="note">A computer\'s line of best fit through your points gives ε = '+fmt(ls.emf)+' V and <i>r</i> = '+fmt(ls.r)+' Ω.</p>' : '')+
     (tips.length ? '<ul>'+tips.map(t => "<li>"+t+"</li>").join("")+'</ul>' : '')+
-    '<p class="note">The intercept is the EMF because no current means no lost volts. The gradient is −<i>r</i>, and it is the same all along the line: <i>r</i> did not change, only the current did.</p>';
+    '<p class="note">The intercept is the EMF because no current means no lost volts. The gradient is −<i>r</i><span class="tuck">,</span> and it is the same all along the line: <i>r</i> did not change, only the current did.</p>';
   renderGraph();
 });
 
