@@ -80,6 +80,8 @@ h2{font-family:var(--f-display);font-weight:600;font-size:1.35rem;line-height:1.
 /* italic symbols in running text lean into the following space; give them a little more room */
 p i,li i,label i,td i,th i{padding-right:.14em}
 .tuck{margin-left:-.14em} /* punctuation straight after an italic symbol keeps its normal spacing */
+.xlink{color:var(--accent);font-weight:600;text-underline-offset:2px}
+.xlink:hover{text-decoration-thickness:2px}
 .note{font-size:.9rem;color:var(--muted);margin:0}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .row.between{justify-content:space-between}
@@ -170,7 +172,7 @@ td.empty{text-align:left;color:var(--muted);white-space:normal}
 
   <div class="lab">
     <div class="col">
-      <p class="note">Electrons repel each other, so they spread out where they can and crowd up where the cell pushes them. In this way, electrical potential energy is stored in the arrangement. More crowded sections of wire are shaded blue. The voltmeter compares the crowding at the two terminals.</p>
+      <p class="note">Electrons repel each other, so they spread out where they can and crowd up where the cell pushes them. In this way, electrical potential energy is stored in the arrangement. More crowded sections of wire are shaded blue. The voltmeter compares the crowding at the two terminals. To build your own circuits from the same electrons, try <a class="xlink" href="https://alexmoorephysics.com/electricity-overlap/" target="_blank" rel="noopener noreferrer">Electricity Overlap</a>.</p>
       <div class="circuit">
         <canvas id="sim" width="760" height="575" role="img" aria-label="A loop of wire with electrons moving round it. A battery region pushes them and resists them at the same time. Circuit symbols beside the wire show the cell with its internal resistance, a voltmeter across it, two ammeters, a switch and a variable resistor."></canvas>
         <button class="pause" id="pauseBtn" aria-pressed="false">Pause electrons</button>
