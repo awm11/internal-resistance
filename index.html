@@ -824,7 +824,8 @@ function refreshExplore(){
   $("eqE").textContent = fmt(c.emf)+" V"; $("eqV").textContent = fmt(t.V)+" V"; $("eqL").textContent = fmt(t.lost)+" V";
   $("eqL2").textContent = fmt(t.lost)+" V"; $("eqI").textContent = fmt(t.I)+" A"; $("eqR").textContent = fmt(c.r)+" Ω";
   { const Re = app.R*c.k, PR = t.I*t.I*Re, Pr = t.I*t.I*c.r, P = PR + Pr;
-    $("pE").textContent = fmt(P,3)+" W"; $("pR").textContent = fmt(PR,3)+" W"; $("pr").textContent = fmt(Pr,3)+" W";
+    const sR = Math.round(PR*1000), sr = Math.round(Pr*1000); // show the total as the sum of the shown parts, so the equation always adds up
+    $("pE").textContent = fmt((sR+sr)/1000,3)+" W"; $("pR").textContent = fmt(sR/1000,3)+" W"; $("pr").textContent = fmt(sr/1000,3)+" W";
     $("pbarR").style.width = (P > 1e-6 ? PR/P*100 : 0)+"%"; $("pbarr").style.width = (P > 1e-6 ? Pr/P*100 : 0)+"%";
     $("pNote").innerHTML = P < 0.0005 ? "No current, so no power is supplied or wasted."
       : Math.round(Pr/P*100)+"% of the power the cell supplies is wasted heating the cell itself. Lower <i>R</i> raises the current, and the wasted share grows."; }
