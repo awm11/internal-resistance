@@ -50,13 +50,13 @@ button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 
-header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
-header>div:first-child{flex:1 1 520px;min-width:0}
+header{position:relative;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
+header>div:first-of-type{flex:1 1 520px;min-width:0}
 /* awm Physics branding: kept deliberately quiet so it never competes with the simulation */
-.brandrow{display:flex;align-items:center;gap:10px}
-.awm-logo-link{display:inline-block;flex:none;line-height:0;border-radius:6px;opacity:.85;transition:opacity .15s ease,transform .2s ease}
+.brandrow{padding-right:60px}
+.awm-logo-link{position:absolute;top:0;right:0;display:inline-block;flex:none;line-height:0;border-radius:6px;opacity:.85;transition:opacity .15s ease,transform .2s ease}
 .awm-logo-link:hover,.awm-logo-link:focus-visible{opacity:1;transform:rotate(8deg)}
-.awm-logo-link svg{width:26px;height:26px;display:block}
+.awm-logo-link svg{width:48px;height:48px;display:block}
 .awm-footer{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 8px;margin:0 auto;padding:3px 16px 4px;color:var(--muted);font:11px/1.3 system-ui,'Segoe UI',Roboto,sans-serif;letter-spacing:0}
 .awm-footer a{color:var(--muted);text-decoration:none}
 .awm-footer a:hover,.awm-footer a:focus-visible{color:var(--fg);text-decoration:underline}
@@ -144,8 +144,9 @@ td.empty{text-align:left;color:var(--muted);white-space:normal}
 <body>
 <div class="wrap">
   <header>
+    <a class="awm-logo-link" href="https://alexmoorephysics.com/" target="_blank" rel="noopener noreferrer" aria-label="More simulations at alexmoorephysics.com" title="More simulations"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="48" height="48" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#244b61"/><path d="M13 51 29.5 12" fill="none" stroke="#8bd7ff" stroke-width="7" stroke-linecap="round"/><path d="m29.5 12 19 39" fill="none" stroke="#f7eee0" stroke-width="7" stroke-linecap="round"/><path d="M21 36h19" fill="none" stroke="#7ee2a8" stroke-width="6" stroke-linecap="round"/><path d="M45 48c5-5 7-11 7-18" fill="none" stroke="#ffc16f" stroke-width="2.5" stroke-linecap="round" opacity=".8"/><circle cx="52" cy="27" r="5.5" fill="#ffb356" stroke="#244b61" stroke-width="2"/></svg></a>
     <div>
-      <div class="brandrow"><a class="awm-logo-link" href="https://alexmoorephysics.com/" target="_blank" rel="noopener noreferrer" aria-label="More simulations at alexmoorephysics.com" title="More simulations"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#244b61"/><path d="M13 51 29.5 12" fill="none" stroke="#8bd7ff" stroke-width="7" stroke-linecap="round"/><path d="m29.5 12 19 39" fill="none" stroke="#f7eee0" stroke-width="7" stroke-linecap="round"/><path d="M21 36h19" fill="none" stroke="#7ee2a8" stroke-width="6" stroke-linecap="round"/><path d="M45 48c5-5 7-11 7-18" fill="none" stroke="#ffc16f" stroke-width="2.5" stroke-linecap="round" opacity=".8"/><circle cx="52" cy="27" r="5.5" fill="#ffb356" stroke="#244b61" stroke-width="2"/></svg></a><div class="eyebrow">AQA A Level Physics · 3.5.1.6 · Required practical 6</div></div>
+      <div class="brandrow"><div class="eyebrow">AQA A Level Physics · 3.5.1.6 · Required practical 6</div></div>
       <h1>Internal Resistance Lab</h1>
       <p class="lede">A cell has to push charge through itself as well as round the circuit. Its internal resistance stays the same, but the volts lost inside it depend on the current.</p>
     </div>
