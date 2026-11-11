@@ -107,7 +107,7 @@ p i,li i,label i,td i,th i{padding-right:.14em}
 .bar .l{background:var(--lost)}
 .bar div{transition:width .15s linear}
 .pscale{display:flex;flex-direction:column;gap:3px}
-.pscale .bar{background:repeating-linear-gradient(90deg,transparent 0 calc(33.333% - 1px),var(--line) calc(33.333% - 1px) 33.333%),var(--surface-2)}
+.pscale .bar{--n:4;background:repeating-linear-gradient(90deg,transparent 0 calc(100%/var(--n) - 1px),var(--line) calc(100%/var(--n) - 1px) calc(100%/var(--n))),var(--surface-2)}
 .pscale .ticks{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
 .eqn{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);column-gap:6px;row-gap:4px;align-items:center;justify-items:center;padding:16px 12px 14px;border-radius:10px;background:var(--surface-2);border-bottom:4px solid var(--line)}
 .eqn .s{font-family:var(--f-sym);font-style:italic;font-weight:600;font-size:clamp(2.3rem,3.6vw,3rem);line-height:1.05}
@@ -176,7 +176,7 @@ td.empty{text-align:left;color:var(--muted);white-space:normal}
         <button class="pause" id="pauseBtn" aria-pressed="false">Pause electrons</button>
         <div class="sr">
           <label for="rheo">Variable resistor</label>
-          <input type="range" id="rheo" min="0.5" max="15" step="0.1" value="5">
+          <input type="range" id="rheo" min="0.3" max="15" step="0.1" value="5">
           <button id="switchBtn" aria-pressed="true">Switch: closed</button>
         </div>
       </div>
@@ -217,7 +217,7 @@ td.empty{text-align:left;color:var(--muted);white-space:normal}
         <p class="note">Multiply each term of <i>ε</i> = <i>V</i> + <i>Ir</i> by the current <i>I</i><span class="tuck">.</span></p>
         <div class="pscale" aria-hidden="true">
           <div class="bar"><div class="v" id="pbarR"></div><div class="l" id="pbarr"></div></div>
-          <div class="ticks"><span>0 W</span><span>1 W</span><span>2 W</span><span>3 W</span></div>
+          <div class="ticks" id="pticks"></div>
         </div>
         <div class="eqn">
           <span class="s">Iε</span><span class="op">=</span><span class="s c-v">I²R</span><span class="op">+</span><span class="s c-l">I²r</span>
@@ -326,7 +326,7 @@ const GEO = {
   trackX1: 206, trackX2: 526,      // rheostat track on the bottom arm
   switchY: 392,
   ammLeftY: 372, ammRightY: 300,
-  N: 465, RMAX: 15, RMIN: 0.5
+  N: 465, RMAX: 15, RMIN: 0.3
 };
 const PHYS = { pump: 0.009, k: 5, gw: 0.0004, rep: 0.09, range: 26, radius: 3, noise: 0.012, rest: 1 };
 
@@ -824,6 +824,7 @@ const cellsEl = $("cells");
 CELLS.forEach(c => { const b = document.createElement("button"); b.className="chip"; b.type="button"; b.setAttribute("role","radio"); b.dataset.id=c.id;
   b.innerHTML = "<b>"+c.name+"</b><span>ε "+fmt(c.emf)+" V</span><span>r "+fmt(c.r)+" Ω</span>";
   b.addEventListener("click", () => { app.exploreCell = c; refresh(); }); cellsEl.appendChild(b); });
+const pticks = $("pticks");
 function refreshExplore(){
   $("dgLever").setAttribute("d", app.closed ? "M320 198V172" : "M320 198L336 176");
   $("dgSwitch").textContent = app.closed ? "switch closed" : "switch open";
@@ -835,8 +836,12 @@ function refreshExplore(){
   { const Re = app.R*c.k, PR = t.I*t.I*Re, Pr = t.I*t.I*c.r, P = PR + Pr;
     const sR = Math.round(PR*1000), sr = Math.round(Pr*1000); // show the total as the sum of the shown parts, so the equation always adds up
     $("pE").textContent = fmt((sR+sr)/1000,3)+" W"; $("pR").textContent = fmt(sR/1000,3)+" W"; $("pr").textContent = fmt(sr/1000,3)+" W";
-    const PMAX = 3; // W: fixed scale, so the bar grows and shrinks with the power (the largest possible here is 2.81 W)
+    // Scale fixed for each cell: its full length is just above the most power this cell can supply (variable resistor at its lowest),
+    // so within a cell the bar grows and shrinks with the power.
+    const top = c.emf*c.emf/(G.RMIN*c.k + c.r), step = [0.1,0.25,0.5,1,2,5].find(v => top/v <= 5), PMAX = Math.ceil(top/step - 1e-9)*step, nT = Math.round(PMAX/step);
     $("pbarR").style.width = Math.min(100, PR/PMAX*100)+"%"; $("pbarr").style.width = Math.min(100, Pr/PMAX*100)+"%";
+    if(pticks.dataset.max !== String(PMAX)){ pticks.dataset.max = PMAX; pticks.parentElement.querySelector(".bar").style.setProperty("--n", nT);
+      pticks.innerHTML = Array.from({length:nT+1}, (_,i) => "<span>"+(+(i*step).toFixed(2))+" W</span>").join(""); }
     $("pNote").innerHTML = P < 0.0005 ? "No current, so no power is supplied or wasted."
       : Math.round(Pr/P*100)+"% of the power the cell supplies is wasted heating the cell itself. Lower <i>R</i> raises the current, and the wasted share grows."; }
   $("takeaway").innerHTML = t.I > 0.005
@@ -862,7 +867,7 @@ const gs = {W:640,H:420,l:76,r:18,t:16,b:50, xm:1, y1:1.8, xMajor:0.1, xMinor:0.
 const Y_MINOR = {0.1:0.02, 0.2:0.05, 0.5:0.1, 1:0.2, 2:0.5, 5:1};
 function scales(){
   let target;
-  if(app.mode==="explore"){ gs.xm = 2; target = 1.5*1.15; }
+  if(app.mode==="explore"){ gs.xm = 2.5; target = 1.5*1.15; }
   else { const maxI = app.readings.reduce((m,p) => Math.max(m,p.I), 0);
     gs.xm = [0.5,1,1.5,2,2.5].find(v => v >= maxI*1.04) || 2.5; target = app.mystery.emf*1.15; }
   gs.yMajor = [0.1,0.2,0.5,1,2,5].find(m => target/m <= 9); gs.yMinor = Y_MINOR[gs.yMajor];
@@ -887,7 +892,7 @@ function renderGraph(){
   s += '<text x="'+((gs.l+right)/2)+'" y="'+(gs.H-10)+'" font-size="13" text-anchor="middle" fill="var(--fg)">current I / A</text>';
   s += '<text transform="translate(16 '+((gs.t+bottom)/2)+') rotate(-90)" font-size="13" text-anchor="middle" fill="var(--fg)">terminal p.d. V / V</text>';
   if(explore){
-    const c = cell(), t = truth(), xe = Math.min(gs.xm, c.emf/c.r), x = n(GX(t.I)), flip = t.I > 1.35, tx = flip ? x-10 : x+10, anchor = flip ? "end" : "start";
+    const c = cell(), t = truth(), xe = Math.min(gs.xm, c.emf/c.r), x = n(GX(t.I)), flip = t.I > 1.7, tx = flip ? x-10 : x+10, anchor = flip ? "end" : "start";
     s += '<line x1="'+gs.l+'" x2="'+right+'" y1="'+n(GY(c.emf))+'" y2="'+n(GY(c.emf))+'" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="7 5"/>';
     s += '<text class="halo" x="'+(gs.l+10)+'" y="'+n(GY(c.emf)-8)+'" font-size="12" fill="var(--muted)">EMF ε = '+fmt(c.emf)+' V</text>';
     { const xl = xe*0.62, ang = Math.atan2(GY(c.emf-c.r*xe)-GY(c.emf), GX(xe)-GX(0))*180/Math.PI;
