@@ -53,6 +53,9 @@ button,input,select{font:inherit;color:inherit}
 header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px}
 header>div:first-of-type{flex:1 1 320px;min-width:0}
 /* awm Physics branding: kept deliberately quiet so it never competes with the simulation */
+.fsbtn{flex:none;display:inline-grid;place-items:center;width:40px;height:40px;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);cursor:pointer}
+.fsbtn:hover{border-color:var(--accent)}
+.fsbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .headright{display:flex;align-items:center;gap:14px;flex:none}
 .awm-logo-link{display:inline-block;flex:none;line-height:0;border-radius:6px;opacity:.85;transition:opacity .15s ease,transform .2s ease}
 .awm-logo-link:hover,.awm-logo-link:focus-visible{opacity:1;transform:rotate(8deg)}
@@ -149,6 +152,7 @@ td.empty{text-align:left;color:var(--muted);white-space:normal}
       <h1>Internal Resistance Lab</h1>
     </div>
     <div class="headright">
+      <button type="button" class="fsbtn" id="fsBtn" aria-label="Fullscreen" title="Fullscreen" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path id="fsIcon" d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4"/></svg></button>
       <div class="tabs" role="tablist" aria-label="Mode">
         <button class="tab" role="tab" id="tab-explore" aria-selected="true" aria-controls="view-explore">Explore</button>
         <button class="tab" role="tab" id="tab-practical" aria-selected="false" aria-controls="view-practical">Practical</button>
@@ -958,6 +962,26 @@ function refresh(){
   if(app.mode==="explore"){ refreshExplore(); renderGraph(); }
 }
 
+/* ---------- fullscreen (same behaviour as electricity-overlap) ---------- */
+{
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+  const btn = $("fsBtn");
+  // iPhone Safari, and some embedded viewers, have no fullscreen for pages, so don't show a dead button.
+  if(document.fullscreenEnabled || document.webkitFullscreenEnabled){
+    btn.hidden = false;
+    const update = () => { const on = Boolean(fsEl()), label = on ? "Exit fullscreen" : "Fullscreen";
+      btn.setAttribute("aria-label", label); btn.title = label;
+      $("fsIcon").setAttribute("d", on ? "M6 2v4H2M10 2v4h4M6 14v-4H2M10 14v-4h4" : "M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4");
+      sizeCanvas(); };
+    document.addEventListener("fullscreenchange", update); document.addEventListener("webkitfullscreenchange", update);
+    btn.addEventListener("click", () => {
+      try{
+        if(fsEl()){ const exit = document.exitFullscreen || document.webkitExitFullscreen; const r = exit && exit.call(document); if(r && r.catch) r.catch(() => {}); }
+        else { const root = document.documentElement, enter = root.requestFullscreen || root.webkitRequestFullscreen; const r = enter && enter.call(root); if(r && r.catch) r.catch(() => {}); }
+      }catch(_){}
+    });
+  }
+}
 if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches){ app.paused = true; $("pauseBtn").setAttribute("aria-pressed","true"); $("pauseBtn").textContent = "Resume electrons"; }
 syncEngine();
 for(let i=0;i<2500;i++) eng.step(); // settle before the first frame
