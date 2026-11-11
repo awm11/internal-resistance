@@ -558,7 +558,10 @@ function pushHistory(){ const last = hist.pop(); last.x.set(eng.x); last.y.set(e
 
 /* Wire artwork follows electricity-overlap: bevelled metal frame, pale underlay, open interior,
    red frame where there is resistance, gold battery with a dark interior. */
-const FRAME = 7, W_ = G.R-G.L, H_ = G.B-G.T;
+/* Same geometry as electricity-overlap: a 4.8 px frame, and an electron's centre never closer than 7.35 px to the outside of
+   the wire (one wall cell plus its radius), which leaves a small visible gap between electrons and the frame. */
+const FRAME = 4.8, GAP = 5.5, VM = G.m + GAP, VBM = G.bm + GAP, W_ = G.R-G.L, H_ = G.B-G.T;
+const VBX1 = G.battX1 - GAP, VBX2 = G.battX2 + GAP;
 const VY = 38, CY = 104, RY = 444, SX = 700;      // voltmeter row, cell symbol row, rheostat symbol row, switch symbol x
 const PROFILES = {
   wire:["#1f4658","#2f6277","#537f91","#82aab9","#c4d9e0","#edf6f8","#c7dce3","#88adbb","#4f7f91","#254f62"],
@@ -577,36 +580,38 @@ function profileColour(name, t){
 function channelPath(d){ ctx.beginPath(); ctx.rect(G.L-d,G.T-d,W_+2*d,H_+2*d); ctx.rect(G.L+d,G.T+d,W_-2*d,H_-2*d); }
 function strokeRing(d){ ctx.strokeRect(G.L-d,G.T-d,W_+2*d,H_+2*d); ctx.strokeRect(G.L+d,G.T+d,W_-2*d,H_-2*d); }
 function framePass(name){
-  const steps = 18;
+  const steps = 32; // fine nested rings, as drawWire does, so the bevel is continuous
   for(let i=0;i<steps;i++){
     const t = (i+0.5)/steps;
-    ctx.strokeStyle = profileColour(name, t); ctx.lineWidth = FRAME/steps + 0.35;
-    strokeRing(G.m + FRAME*(1-t));
+    ctx.strokeStyle = profileColour(name, t); ctx.lineWidth = FRAME/steps + 0.3;
+    strokeRing(VM + FRAME*(1-t));
   }
-  ctx.strokeStyle = name==="wire" ? "#28566d" : "#5b0911"; ctx.lineWidth = 0.8; strokeRing(G.m+FRAME);
+  ctx.strokeStyle = name==="wire" ? "#28566d" : "#5b0911"; ctx.lineWidth = 0.69; strokeRing(VM+FRAME-0.6);  // crisp dark outside edge
+  ctx.strokeStyle = name==="wire" ? "#3d6778" : "#8a1520"; ctx.lineWidth = 0.96; strokeRing(VM-0.48);      // recessed lip at the inner edge
+  ctx.strokeStyle = "#f9feff"; ctx.lineWidth = 0.45; strokeRing(VM-1.2);                                     // fine highlight just inside it
 }
 const BF = 8; // battery frame thickness
 function drawFrames(){
   ctx.lineJoin = "miter";
-  const bx = G.battX1-BF, by = G.T-G.bm-BF, bw = G.battX2-G.battX1+2*BF, bh = 2*G.bm+2*BF;
+  const bx = VBX1-BF, by = G.T-VBM-BF, bw = VBX2-VBX1+2*BF, bh = 2*VBM+2*BF;
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,G.W,G.H); ctx.rect(bx,by,bw,bh); ctx.clip("evenodd");
   framePass("wire");
   const xc = eng.trackContactX();
   if(xc > G.trackX1+1){ ctx.save(); ctx.beginPath(); ctx.rect(G.trackX1, G.B-40, xc-G.trackX1, 80); ctx.clip(); framePass("res"); ctx.restore(); }
   ctx.restore();
   // gold frame right round the battery, open where the wires join
-  ctx.save(); ctx.beginPath(); ctx.rect(0,0,G.W,G.H); ctx.rect(bx-2,G.T-G.m,BF+3,2*G.m); ctx.rect(G.battX2-1,G.T-G.m,BF+3,2*G.m); ctx.clip("evenodd");
+  ctx.save(); ctx.beginPath(); ctx.rect(0,0,G.W,G.H); ctx.rect(bx-2,G.T-VM,BF+3,2*VM); ctx.rect(VBX2-1,G.T-VM,BF+3,2*VM); ctx.clip("evenodd");
   const steps = 20;
   for(let i=0;i<steps;i++){ const t = (i+0.5)/steps, d = BF*(1-t);
     ctx.strokeStyle = profileColour("cell", t); ctx.lineWidth = BF/steps + 0.4;
-    ctx.beginPath(); ctx.roundRect(G.battX1-d, G.T-G.bm-d, G.battX2-G.battX1+2*d, 2*G.bm+2*d, 2+d*0.4); ctx.stroke(); }
+    ctx.beginPath(); ctx.roundRect(VBX1-d, G.T-VBM-d, VBX2-VBX1+2*d, 2*VBM+2*d, 2+d*0.4); ctx.stroke(); }
   ctx.strokeStyle = "#6b4306"; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,5); ctx.stroke();
-  ctx.strokeStyle = "rgba(255,243,204,0.8)"; ctx.lineWidth = 0.8; ctx.strokeRect(G.battX1+0.5,G.T-G.bm+0.5,G.battX2-G.battX1-1,2*G.bm-1);
+  ctx.strokeStyle = "rgba(255,243,204,0.8)"; ctx.lineWidth = 0.8; ctx.strokeRect(VBX1+0.5,G.T-VBM+0.5,VBX2-VBX1-1,2*VBM-1);
   ctx.restore();
-  ctx.fillStyle = "#e9cf8f"; for(const x of [bx, G.battX2]) for(const y of [G.T-G.m-FRAME, G.T+G.m]){ ctx.beginPath(); ctx.roundRect(x,y,BF,FRAME,2); ctx.fill(); }
+  ctx.fillStyle = "#e9cf8f"; for(const x of [bx, VBX2]) for(const y of [G.T-VM-FRAME, G.T+VM]){ ctx.beginPath(); ctx.roundRect(x,y,BF,FRAME,2); ctx.fill(); }
 }
 function segRect(k){
-  const S=eng.SEG, s=k*S, o=G.m;
+  const S=eng.SEG, s=k*S, o=VM;
   if(s < W_) return [G.L+s, G.T-o, S, 2*o];
   if(s < W_+H_) return [G.R-o, G.T+(s-W_), 2*o, S];
   if(s < 2*W_+H_) return [G.R-(s-W_-H_)-S, G.B-o, S, 2*o];
@@ -640,7 +645,7 @@ function readout(x,y,w,txt,pink){
 function ammeterLoop(cx,cy,front){
   ctx.strokeStyle = front ? "rgba(255,29,29,0.9)" : "rgb(172,23,23)";
   ctx.lineWidth = front ? 4 : 3;
-  ctx.beginPath(); ctx.ellipse(cx,cy,G.m+FRAME+6,10,0, front?0:Math.PI, front?Math.PI:Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(cx,cy,VM+FRAME+6,10,0, front?0:Math.PI, front?Math.PI:Math.PI*2); ctx.stroke();
 }
 function seg(x1,y1,x2,y2){ ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); }
 function arrow(x,y,len,col,lw){
@@ -649,11 +654,10 @@ function arrow(x,y,len,col,lw){
   ctx.lineCap = "butt";
 }
 function draw(){
-  const c = cell(), explore = app.mode==="explore", m = G.m, xc = eng.trackContactX();
+  const c = cell(), explore = app.mode==="explore", m = VM, xc = eng.trackContactX();
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.fillStyle = "#fafafa"; ctx.fillRect(0,0,G.W,G.H);
 
-  channelPath(m+FRAME+2); ctx.fillStyle = "#c9d9e4"; ctx.fill("evenodd");
   channelPath(m); ctx.fillStyle = "#fafafa"; ctx.fill("evenodd");
   ctx.save(); channelPath(m); ctx.clip("evenodd");
   // crowding tint
@@ -667,23 +671,23 @@ function draw(){
   for(let x=G.trackX1+7; x<xc-3; x+=11) for(let y=G.B-m+6, j=0; y<=G.B+m-5; y+=8, j++){ ctx.beginPath(); ctx.arc(x+(j%2?4:0),y,1.9,0,6.3); ctx.fill(); }
   ctx.restore();
   // battery, as in electricity-overlap: taller than the wire, orange + end, dark body where the push and the resistance both act
-  const bm = G.bm, bw = G.battX2-G.battX1;
-  let g = ctx.createLinearGradient(G.battX1,0,G.capX,0); g.addColorStop(0,"#f6a02c"); g.addColorStop(1,"#fbd94a");
-  ctx.fillStyle = g; ctx.fillRect(G.battX1,G.T-bm,G.capX-G.battX1,2*bm);
+  const bm = VBM;
+  let g = ctx.createLinearGradient(VBX1,0,G.capX,0); g.addColorStop(0,"#f6a02c"); g.addColorStop(1,"#fbd94a");
+  ctx.fillStyle = g; ctx.fillRect(VBX1,G.T-bm,G.capX-VBX1,2*bm);
   g = ctx.createLinearGradient(0,G.T-bm,0,G.T+bm); g.addColorStop(0,"#07121d"); g.addColorStop(0.5,"#172838"); g.addColorStop(1,"#07121d");
-  ctx.fillStyle = g; ctx.fillRect(G.capX,G.T-bm,G.battX2-G.capX,2*bm);
+  ctx.fillStyle = g; ctx.fillRect(G.capX,G.T-bm,VBX2-G.capX,2*bm);
   g = ctx.createLinearGradient(G.capX-3,0,G.capX+3,0); g.addColorStop(0,"#d9b23a"); g.addColorStop(0.5,"#8a7426"); g.addColorStop(1,"#3b3a22");
   ctx.fillStyle = g; ctx.fillRect(G.capX-3,G.T-bm,6,2*bm);
-  ctx.fillStyle = "#c9d9e4"; ctx.fillRect(G.battX1-BF,G.T-m,BF,2*m); ctx.fillRect(G.battX2,G.T-m,BF,2*m);
+  ctx.fillStyle = "#fafafa"; ctx.fillRect(VBX1-BF-1,G.T-m,BF+1,2*m); ctx.fillRect(VBX2,G.T-m,BF+1,2*m);
   // resistance: an even lattice of red dots, closer together for a larger r
-  { const wid = G.battX2-G.battX1-10, hei = 2*bm-10, sp = Math.sqrt(wid*hei/clamp(c.r/c.k*126, 14, 280));
+  { const wid = VBX2-VBX1-10, hei = 2*bm-10, sp = Math.sqrt(wid*hei/clamp(c.r/c.k*126, 14, 280));
     const cols = Math.max(1,Math.round(wid/sp)), rows = Math.max(1,Math.round(hei/sp)), dx = wid/cols, dy = hei/rows;
-    for(let j=0;j<rows;j++) for(let i=0;i<cols;i++){ const x = G.battX1+5+dx*(i+0.5);
+    for(let j=0;j<rows;j++) for(let i=0;i<cols;i++){ const x = VBX1+5+dx*(i+0.5);
       ctx.fillStyle = x < G.capX+3 ? "#c8202f" : "#ff5a66";
       ctx.beginPath(); ctx.arc(x, G.T-bm+5+dy*(j+0.5), 1.9, 0, 6.3); ctx.fill(); } }
   for(const ax of [G.capX+10, G.capX+52, G.capX+94]) arrow(ax, G.T, 30, "rgba(255,224,91,0.95)", 4);
-  label("+", (G.battX1+G.capX)/2, G.T+13, {size:40, weight:"700", color:"#000000"});
-  ctx.fillStyle = "#ffffff"; ctx.fillRect(G.battX2-34, G.T-bm+14, 20, 5);
+  label("+", (VBX1+G.capX)/2, G.T+13, {size:40, weight:"700", color:"#000000"});
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(VBX2-34, G.T-bm+14, 20, 5);
 
   ammeterLoop(G.L,G.ammLeftY,false); ammeterLoop(G.R,G.ammRightY,false);
 
@@ -719,7 +723,7 @@ function draw(){
   seg(px,CY-18,px,CY+18); ctx.lineWidth = 6; seg(nx,CY-10,nx,CY+10); ctx.lineWidth = 2;
   ctx.fillStyle = "#fafafa"; ctx.fillRect(rx1,CY-8,rx2-rx1,16); ctx.strokeRect(rx1,CY-8,rx2-rx1,16);
   ctx.setLineDash([5,4]); ctx.strokeStyle = INK_SOFT; ctx.lineWidth = 1.5; ctx.strokeRect(bx1,CY-38,bx2-bx1,72);
-  ctx.setLineDash([2,4]); ctx.lineWidth = 1; seg(bx1,CY+34,G.battX1-BF,G.T-G.bm-BF); seg(bx2,CY+34,G.battX2+BF,G.T-G.bm-BF); ctx.setLineDash([]);
+  ctx.setLineDash([2,4]); ctx.lineWidth = 1; seg(bx1,CY+34,VBX1-BF,G.T-VBM-BF); seg(bx2,CY+34,VBX2+BF,G.T-VBM-BF); ctx.setLineDash([]);
   label("ε", (px+nx)/2, CY-22, {sym:true, size:17, weight:"600"});
   label("r", (rx1+rx2)/2, CY-14, {sym:true, size:17, weight:"600"});
   label("+", px-9, CY-6, {size:13, weight:"700"}); label("−", nx+11, CY-6, {size:13, weight:"700"});
@@ -809,7 +813,7 @@ $("switchBtn").addEventListener("click", () => setSwitch(!app.closed));
 $("pauseBtn").addEventListener("click", () => { app.paused = !app.paused; $("pauseBtn").setAttribute("aria-pressed", String(app.paused)); $("pauseBtn").textContent = app.paused ? "Resume electrons" : "Pause electrons"; });
 function canvasPoint(e){ const b = cv.getBoundingClientRect(); return [(e.clientX-b.left)*G.W/b.width, (e.clientY-b.top)*G.H/b.height]; }
 const onTrack = (x,y) => x>G.trackX1-18 && x<G.trackX2+18 && y>RY-66 && y<RY+14;
-const onSwitch = (x,y) => x>G.R-G.m-FRAME-4 && y>G.switchY-50 && y<G.switchY+84;
+const onSwitch = (x,y) => x>G.R-VM-FRAME-4 && y>G.switchY-50 && y<G.switchY+84;
 function dragTo(x){ setR(Math.round((x-G.trackX1)/(G.trackX2-G.trackX1)*G.RMAX*10)/10); }
 cv.addEventListener("pointerdown", e => { const [x,y] = canvasPoint(e);
   if(onTrack(x,y)){ dragging = true; cv.setPointerCapture(e.pointerId); dragTo(x); e.preventDefault(); }
