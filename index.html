@@ -185,6 +185,14 @@ td.empty{text-align:left;color:var(--muted);white-space:normal}
         <div class="graph"><svg id="graph" viewBox="0 0 640 420" role="img" aria-label="Graph of terminal p.d. against current"></svg></div>
         <p class="note" id="graphNote"></p>
       </div>
+      <div class="panel" id="tryPanel">
+        <div class="label">Try this</div>
+        <ul class="try">
+          <li>Open the switch. With no current there are no lost volts, so the voltmeter reads the EMF.</li>
+          <li>Turn the resistance down. The current rises, and so do the lost volts. Did <i>r</i> change?</li>
+          <li>Swap to the old cell at the same resistor setting. Same EMF, bigger <i>r</i><span class="tuck">:</span> what happens to the terminal p.d.?</li>
+        </ul>
+      </div>
       <p class="note">Drag the variable resistor's contact and click the switch. Each dot stands for many electrons. They repel each other, so they spread out where they can and crowd up where the cell pushes them. Bluer wire means more crowding. The voltmeter compares the crowding at the two terminals.</p>
     </div>
 
@@ -225,14 +233,6 @@ td.empty{text-align:left;color:var(--muted);white-space:normal}
           <span class="u">supplied by the cell</span><span></span><span class="u">delivered to <i>R</i></span><span></span><span class="u">wasted in the cell</span>
         </div>
         <p class="note" id="pNote"></p>
-      </div>
-      <div class="panel">
-        <div class="label">Try this</div>
-        <ul class="try">
-          <li>Open the switch. With no current there are no lost volts, so the voltmeter reads the EMF.</li>
-          <li>Turn the resistance down. The current rises, and so do the lost volts. Did <i>r</i> change?</li>
-          <li>Swap to the old cell at the same resistor setting. Same EMF, bigger <i>r</i><span class="tuck">:</span> what happens to the terminal p.d.?</li>
-        </ul>
       </div>
       <div class="panel">
         <div class="label">Circuit diagram</div>
@@ -982,6 +982,7 @@ $("answers").addEventListener("submit", e => {
 function setMode(mode, push){
   app.mode = mode;
   for(const m of ["explore","practical"]){ $("tab-"+m).setAttribute("aria-selected", String(m===mode)); $("view-"+m).hidden = m!==mode; }
+  $("tryPanel").hidden = mode!=="explore";
   if(push){ try{ history.replaceState(null,"","#"+mode); }catch(_){ location.hash = mode; } }
   refresh(); if(mode==="practical") afterData();
 }
