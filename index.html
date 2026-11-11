@@ -559,9 +559,10 @@ function pushHistory(){ const last = hist.pop(); last.x.set(eng.x); last.y.set(e
 
 /* Wire artwork follows electricity-overlap: bevelled metal frame, pale underlay, open interior,
    red frame where there is resistance, gold battery with a dark interior. */
-/* Same geometry as electricity-overlap: a 4.8 px frame, and an electron's centre never closer than 7.35 px to the outside of
-   the wire (one wall cell plus its radius), which leaves a small visible gap between electrons and the frame. */
-const FRAME = 4.8, GAP = 3, VM = G.m + GAP, VBM = G.bm + GAP, W_ = G.R-G.L, H_ = G.B-G.T;
+/* Same 4.8 px frame as electricity-overlap. The engine stops an electron's centre 22 px from the centre line; a drawn
+   electron's edge (circle plus outline) is 3.4 px beyond that, and the frame's dark inner lip is 0.96 px wide, so the lip
+   starts exactly where an electron's edge reaches: GAP = 3.4 + 0.96. Electrons touch the wall and never overlap it. */
+const FRAME = 4.8, GAP = 4.4, VM = G.m + GAP, VBM = G.bm + GAP, W_ = G.R-G.L, H_ = G.B-G.T;
 const VBX1 = G.battX1 - GAP, VBX2 = G.battX2 + GAP;
 const VY = 38, CY = 104, RY = 444, SX = 700;      // voltmeter row, cell symbol row, rheostat symbol row, switch symbol x
 const PROFILES = {
