@@ -706,7 +706,7 @@ function draw(){
 
   // variable resistor
   ctx.strokeStyle = INK; ctx.lineWidth = 2;
-  const WY = RY-46, jx = G.trackX2+20;
+  const WY = RY-52, GY_ = RY-36, jx = G.trackX2+20; // wiper wire height; grip sits on the vertical part, below the corner
   seg(G.trackX1-33,RY,G.trackX1,RY); seg(G.trackX2,RY,G.trackX2+33,RY);
   ctx.fillStyle = "#fafafa"; ctx.fillRect(G.trackX1,RY-8,G.trackX2-G.trackX1,16);
   ctx.fillStyle = "rgba(199,31,47,0.22)"; ctx.fillRect(G.trackX1,RY-8,xc-G.trackX1,16);
@@ -716,9 +716,9 @@ function draw(){
   ctx.beginPath(); ctx.moveTo(xc,RY-8); ctx.lineTo(xc-5.5,RY-19); ctx.lineTo(xc+5.5,RY-19); ctx.closePath(); ctx.fill();
   // grip: a small tab with arrows either side, to show it slides
   ctx.fillStyle = dragging ? "#dff0f5" : "#ffffff"; ctx.strokeStyle = "#087da6"; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.roundRect(xc-17,WY-9,34,18,9); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.roundRect(xc-17,GY_-8,34,16,8); ctx.fill(); ctx.stroke();
   ctx.lineWidth = 1.8; ctx.lineCap = "round"; ctx.lineJoin = "round";
-  ctx.beginPath(); ctx.moveTo(xc-6,WY-4); ctx.lineTo(xc-10,WY); ctx.lineTo(xc-6,WY+4); ctx.moveTo(xc+6,WY-4); ctx.lineTo(xc+10,WY); ctx.lineTo(xc+6,WY+4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(xc-6,GY_-4); ctx.lineTo(xc-10,GY_); ctx.lineTo(xc-6,GY_+4); ctx.moveTo(xc+6,GY_-4); ctx.lineTo(xc+10,GY_); ctx.lineTo(xc+6,GY_+4); ctx.stroke();
   ctx.lineCap = "butt";
   label("variable resistor"+(explore ? "   R = "+fmt(app.R,1)+" Ω" : ""), (G.trackX1+G.trackX2)/2, G.B+m+FRAME+22, {size:14});
 
@@ -773,7 +773,7 @@ function setSwitch(closed){ app.closed = closed; $("switchBtn").textContent = "S
 $("switchBtn").addEventListener("click", () => setSwitch(!app.closed));
 $("pauseBtn").addEventListener("click", () => { app.paused = !app.paused; $("pauseBtn").setAttribute("aria-pressed", String(app.paused)); $("pauseBtn").textContent = app.paused ? "Resume electrons" : "Pause electrons"; });
 function canvasPoint(e){ const b = cv.getBoundingClientRect(); return [(e.clientX-b.left)*G.W/b.width, (e.clientY-b.top)*G.H/b.height]; }
-const onTrack = (x,y) => x>G.trackX1-18 && x<G.trackX2+18 && y>RY-62 && y<RY+14;
+const onTrack = (x,y) => x>G.trackX1-18 && x<G.trackX2+18 && y>RY-66 && y<RY+14;
 const onSwitch = (x,y) => x>G.R-G.m-FRAME-4 && y>G.switchY-50 && y<G.switchY+84;
 function dragTo(x){ setR(Math.round((x-G.trackX1)/(G.trackX2-G.trackX1)*G.RMAX*10)/10); }
 cv.addEventListener("pointerdown", e => { const [x,y] = canvasPoint(e);
