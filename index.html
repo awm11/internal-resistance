@@ -366,7 +366,7 @@ function createEngine(seedRandom) {
 
     const pumpA = PHYS.pump * (state.emf / 1.5);
     const dWire = Math.exp(-PHYS.gw);
-    const dInt = Math.exp(-(PHYS.gw + PHYS.k * state.r / (G.battX2 - G.capX)));
+    const dInt = Math.exp(-(PHYS.gw + PHYS.k * state.r / (G.battX2 - G.battX1)));
     const dTrack = Math.exp(-(PHYS.gw + PHYS.k * G.RMAX / (G.trackX2 - G.trackX1)));
     const xc = trackContactX();
     const oL = G.L - G.m, oR = G.R + G.m, oT = G.T - G.m, oB = G.B + G.m;
@@ -380,7 +380,7 @@ function createEngine(seedRandom) {
       const top = py < G.T + G.hw, bottom = py > G.B - G.hw;
       let damp = dWire;
       if (top) {
-        if (px >= G.capX && px < G.battX2) { vx[i] += pumpA; damp = dInt; }
+        if (px >= G.battX1 && px < G.battX2) { damp = dInt; if (px >= G.capX) vx[i] += pumpA; } // resistance throughout the battery
       } else if (bottom && px >= G.trackX1 && px <= xc) damp = dTrack;
       vx[i] = (vx[i] + (rnd() - 0.5) * nz) * damp; vy[i] = (vy[i] + (rnd() - 0.5) * nz) * damp;
       let nx = px + vx[i], ny = py + vy[i];
@@ -631,10 +631,11 @@ function draw(){
   ctx.fillStyle = g; ctx.fillRect(G.capX-3,G.T-bm,6,2*bm);
   ctx.fillStyle = "#c9d9e4"; ctx.fillRect(G.battX1-BF,G.T-m,BF,2*m); ctx.fillRect(G.battX2,G.T-m,BF,2*m);
   // resistance: an even lattice of red dots, closer together for a larger r
-  { const wid = G.battX2-G.capX-10, hei = 2*bm-10, sp = Math.sqrt(wid*hei/clamp(c.r/c.k*90, 10, 200));
+  { const wid = G.battX2-G.battX1-10, hei = 2*bm-10, sp = Math.sqrt(wid*hei/clamp(c.r/c.k*126, 14, 280));
     const cols = Math.max(1,Math.round(wid/sp)), rows = Math.max(1,Math.round(hei/sp)), dx = wid/cols, dy = hei/rows;
-    ctx.fillStyle = "#ff5a66";
-    for(let j=0;j<rows;j++) for(let i=0;i<cols;i++){ ctx.beginPath(); ctx.arc(G.capX+5+dx*(i+0.5), G.T-bm+5+dy*(j+0.5), 1.9, 0, 6.3); ctx.fill(); } }
+    for(let j=0;j<rows;j++) for(let i=0;i<cols;i++){ const x = G.battX1+5+dx*(i+0.5);
+      ctx.fillStyle = x < G.capX+3 ? "#c8202f" : "#ff5a66";
+      ctx.beginPath(); ctx.arc(x, G.T-bm+5+dy*(j+0.5), 1.9, 0, 6.3); ctx.fill(); } }
   for(const ax of [G.capX+10, G.capX+52, G.capX+94]) arrow(ax, G.T, 30, "rgba(255,224,91,0.95)", 4);
   label("+", (G.battX1+G.capX)/2, G.T+13, {size:40, weight:"700", color:"#000000"});
   ctx.fillStyle = "#ffffff"; ctx.fillRect(G.battX2-34, G.T-bm+14, 20, 5);
