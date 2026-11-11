@@ -106,6 +106,9 @@ p i,li i,label i,td i,th i{padding-right:.14em}
 .bar .v{background:var(--accent)}
 .bar .l{background:var(--lost)}
 .bar div{transition:width .15s linear}
+.pscale{display:flex;flex-direction:column;gap:3px}
+.pscale .bar{background:repeating-linear-gradient(90deg,transparent 0 calc(33.333% - 1px),var(--line) calc(33.333% - 1px) 33.333%),var(--surface-2)}
+.pscale .ticks{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
 .eqn{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);column-gap:6px;row-gap:4px;align-items:center;justify-items:center;padding:16px 12px 14px;border-radius:10px;background:var(--surface-2);border-bottom:4px solid var(--line)}
 .eqn .s{font-family:var(--f-sym);font-style:italic;font-weight:600;font-size:clamp(2.3rem,3.6vw,3rem);line-height:1.05}
 .eqn .n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600;font-size:clamp(1.15rem,1.75vw,1.5rem);white-space:nowrap}
@@ -212,7 +215,10 @@ td.empty{text-align:left;color:var(--muted);white-space:normal}
       <div class="panel">
         <h2>Where the power goes</h2>
         <p class="note">Multiply each term of <i>ε</i> = <i>V</i> + <i>Ir</i> by the current <i>I</i><span class="tuck">.</span></p>
-        <div class="bar" aria-hidden="true"><div class="v" id="pbarR"></div><div class="l" id="pbarr"></div></div>
+        <div class="pscale" aria-hidden="true">
+          <div class="bar"><div class="v" id="pbarR"></div><div class="l" id="pbarr"></div></div>
+          <div class="ticks"><span>0 W</span><span>1 W</span><span>2 W</span><span>3 W</span></div>
+        </div>
         <div class="eqn">
           <span class="s">Iε</span><span class="op">=</span><span class="s c-v">I²R</span><span class="op">+</span><span class="s c-l">I²r</span>
           <span class="n" id="pE"></span><span class="op">=</span><span class="n c-v" id="pR"></span><span class="op">+</span><span class="n c-l" id="pr"></span>
@@ -829,7 +835,8 @@ function refreshExplore(){
   { const Re = app.R*c.k, PR = t.I*t.I*Re, Pr = t.I*t.I*c.r, P = PR + Pr;
     const sR = Math.round(PR*1000), sr = Math.round(Pr*1000); // show the total as the sum of the shown parts, so the equation always adds up
     $("pE").textContent = fmt((sR+sr)/1000,3)+" W"; $("pR").textContent = fmt(sR/1000,3)+" W"; $("pr").textContent = fmt(sr/1000,3)+" W";
-    $("pbarR").style.width = (P > 1e-6 ? PR/P*100 : 0)+"%"; $("pbarr").style.width = (P > 1e-6 ? Pr/P*100 : 0)+"%";
+    const PMAX = 3; // W: fixed scale, so the bar grows and shrinks with the power (the largest possible here is 2.81 W)
+    $("pbarR").style.width = Math.min(100, PR/PMAX*100)+"%"; $("pbarr").style.width = Math.min(100, Pr/PMAX*100)+"%";
     $("pNote").innerHTML = P < 0.0005 ? "No current, so no power is supplied or wasted."
       : Math.round(Pr/P*100)+"% of the power the cell supplies is wasted heating the cell itself. Lower <i>R</i> raises the current, and the wasted share grows."; }
   $("takeaway").innerHTML = t.I > 0.005
