@@ -824,7 +824,7 @@ $("newCell").addEventListener("click", () => { newMystery(); app.readings = []; 
 function afterData(){ renderRows(); renderGraph(); $("recordBtn").disabled = app.readings.length >= 24; }
 
 /* ---------- graph paper (shared by both modes) ---------- */
-const gs = {W:640,H:420,l:62,r:18,t:16,b:50, xm:1, y1:1.8, xMajor:0.1, xMinor:0.02, yMajor:0.2, yMinor:0.05};
+const gs = {W:640,H:420,l:76,r:18,t:16,b:50, xm:1, y1:1.8, xMajor:0.1, xMinor:0.02, yMajor:0.2, yMinor:0.05};
 const Y_MINOR = {0.1:0.02, 0.2:0.05, 0.5:0.1, 1:0.2, 2:0.5, 5:1};
 function scales(){
   let target;
@@ -834,7 +834,7 @@ function scales(){
   gs.yMajor = [0.1,0.2,0.5,1,2,5].find(m => target/m <= 9); gs.yMinor = Y_MINOR[gs.yMajor];
   gs.y1 = Math.ceil(target/gs.yMajor - 1e-9)*gs.yMajor;
   gs.xMajor = gs.xm <= 1 ? 0.1 : gs.xm <= 1.5 ? 0.25 : 0.5; gs.xMinor = gs.xm <= 1 ? 0.02 : 0.05;
-  if(app.line){ const c = app.line; c.c = clamp(c.c, 0, gs.y1); const ye = clamp(c.c + c.m*gs.xm, 0, gs.y1); c.m = (ye-c.c)/gs.xm; }
+  
 }
 const GX = v => gs.l + v/gs.xm*(gs.W-gs.l-gs.r), GY = v => gs.H-gs.b - v/gs.y1*(gs.H-gs.t-gs.b);
 const n1 = v => +v.toFixed(2);
@@ -842,13 +842,13 @@ function cross(I,V,w){ const x=n1(GX(I)), y=n1(GY(V)); return '<path d="M'+(x-5.
 function renderGraph(){
   scales();
   const explore = app.mode==="explore", n = n1, right = gs.W-gs.r, bottom = gs.H-gs.b;
-  let s = "";
+  let s = '<clipPath id="plotClip"><rect x="'+(gs.l-18)+'" y="'+gs.t+'" width="'+(right-gs.l+18)+'" height="'+(bottom-gs.t)+'"/></clipPath>';
   for(let i=0; i<=Math.round(gs.xm/gs.xMinor); i++){ const v=i*gs.xMinor, maj = Math.abs(v/gs.xMajor-Math.round(v/gs.xMajor))<1e-6;
     s += '<line x1="'+n(GX(v))+'" x2="'+n(GX(v))+'" y1="'+gs.t+'" y2="'+bottom+'" stroke="var('+(maj?"--grid-major":"--grid")+')" stroke-width="'+(maj?1:0.6)+'"/>';
     if(maj) s += '<text x="'+n(GX(v))+'" y="'+(bottom+17)+'" font-size="12" text-anchor="middle" fill="var(--fg)">'+v.toFixed(gs.xMajor===0.25?2:1)+'</text>'; }
   for(let i=0; i<=Math.round(gs.y1/gs.yMinor); i++){ const v=i*gs.yMinor, k=v/gs.yMajor, maj = Math.abs(k-Math.round(k))<1e-6;
     s += '<line x1="'+gs.l+'" x2="'+right+'" y1="'+n(GY(v))+'" y2="'+n(GY(v))+'" stroke="var('+(maj?"--grid-major":"--grid")+')" stroke-width="'+(maj?1:0.6)+'"/>';
-    if(maj) s += '<text x="'+(gs.l-8)+'" y="'+n(GY(v)+4)+'" font-size="12" text-anchor="end" fill="var(--fg)">'+v.toFixed(1)+'</text>'; }
+    if(maj) s += '<text x="'+(gs.l-22)+'" y="'+n(GY(v)+4)+'" font-size="12" text-anchor="end" fill="var(--fg)">'+v.toFixed(1)+'</text>'; }
   s += '<line x1="'+gs.l+'" x2="'+gs.l+'" y1="'+gs.t+'" y2="'+bottom+'" stroke="var(--fg)" stroke-width="1.5"/><line x1="'+gs.l+'" x2="'+right+'" y1="'+bottom+'" y2="'+bottom+'" stroke="var(--fg)" stroke-width="1.5"/>';
   s += '<text x="'+((gs.l+right)/2)+'" y="'+(gs.H-10)+'" font-size="13" text-anchor="middle" fill="var(--fg)">current I / A</text>';
   s += '<text transform="translate(16 '+((gs.t+bottom)/2)+') rotate(-90)" font-size="13" text-anchor="middle" fill="var(--fg)">terminal p.d. V / V</text>';
@@ -871,10 +871,11 @@ function renderGraph(){
       s += '<line x1="'+n(GX(0))+'" y1="'+n(GY(m.emf))+'" x2="'+n(GX(xe))+'" y2="'+n(GY(m.emf-m.r*xe))+'" stroke="var(--ok)" stroke-width="2" stroke-dasharray="7 5"/>';
       s += '<text class="halo" x="'+n(GX(xl)+10)+'" y="'+n(GY(m.emf-m.r*xl)-10)+'" font-size="12" fill="var(--ok)">the cell\'s true line</text>'; }
     if(app.line){ const c = app.line;
-      s += '<line x1="'+n(GX(0))+'" y1="'+n(GY(c.c))+'" x2="'+n(GX(gs.xm))+'" y2="'+n(GY(c.c + c.m*gs.xm))+'" stroke="var(--accent)" stroke-width="2"/>'; }
+      const xL = -18/(gs.W-gs.l-gs.r)*gs.xm; // 18 px left of the axis
+      s += '<line x1="'+n(GX(xL))+'" y1="'+n(GY(c.c + c.m*xL))+'" x2="'+n(GX(gs.xm))+'" y2="'+n(GY(c.c + c.m*gs.xm))+'" stroke="var(--accent)" stroke-width="2" clip-path="url(#plotClip)"/>'; }
     for(const p of app.readings) s += cross(p.I,p.V,2.4);
     if(app.line){ const c = app.line, ye = c.c + c.m*gs.xm;
-      s += '<circle class="handle" data-h="0" tabindex="0" role="slider" aria-label="Line of best fit: left end" aria-valuenow="'+c.c.toFixed(3)+'" cx="'+n(GX(0))+'" cy="'+n(GY(c.c))+'" r="9" fill="var(--accent)" stroke="var(--paper)" stroke-width="2.5"/>';
+      s += '<circle class="handle" data-h="0" tabindex="0" role="slider" aria-label="Line of best fit: left end" aria-valuenow="'+c.c.toFixed(3)+'" cx="'+n(GX(H0*gs.xm))+'" cy="'+n(GY(c.c + c.m*H0*gs.xm))+'" r="9" fill="var(--accent)" stroke="var(--paper)" stroke-width="2.5"/>';
       s += '<circle class="handle" data-h="1" tabindex="0" role="slider" aria-label="Line of best fit: right end" aria-valuenow="'+ye.toFixed(3)+'" cx="'+n(GX(gs.xm))+'" cy="'+n(GY(ye))+'" r="9" fill="var(--accent)" stroke="var(--paper)" stroke-width="2.5"/>'; }
     if(!app.readings.length) s += '<text x="'+((gs.l+right)/2)+'" y="'+((gs.t+bottom)/2)+'" font-size="14" text-anchor="middle" fill="var(--muted)">Record a reading to plot your first point</text>';
   }
@@ -891,10 +892,12 @@ $("lineBtn").addEventListener("click", () => {
   else { const mean = app.readings.reduce((a,p) => a+p.V, 0)/app.readings.length; app.line = {c:mean, m:0}; }
   renderGraph();
 });
+const H0 = 0.12; // left handle sits this far along the x-axis, leaving the intercept clear
 const graph = $("graph"); let hDrag = null;
 function setHandle(h, v){
   const c = app.line; if(!c) return; v = clamp(v, 0, gs.y1);
-  if(h === 0){ const ye = c.c + c.m*gs.xm; c.c = v; c.m = (ye-v)/gs.xm; } else c.m = (v-c.c)/gs.xm;
+  const x0 = H0*gs.xm, y0 = c.c + c.m*x0, ye = c.c + c.m*gs.xm;
+  if(h === 0){ c.m = (ye-v)/(gs.xm-x0); c.c = ye - c.m*gs.xm; } else { c.m = (v-y0)/(gs.xm-x0); c.c = y0 - c.m*x0; }
 }
 function graphV(e){ const b = graph.getBoundingClientRect(); const y = (e.clientY-b.top)*gs.H/b.height; return (gs.H-gs.b-y)/(gs.H-gs.t-gs.b)*gs.y1; }
 graph.addEventListener("pointerdown", e => { const h = e.target.closest("[data-h]"); if(!h) return; hDrag = +h.dataset.h; graph.setPointerCapture(e.pointerId); e.preventDefault(); });
@@ -902,7 +905,7 @@ graph.addEventListener("pointermove", e => { if(hDrag === null) return; setHandl
 const endDrag = () => { hDrag = null; }; graph.addEventListener("pointerup", endDrag); graph.addEventListener("pointercancel", endDrag);
 graph.addEventListener("keydown", e => { const h = e.target.closest && e.target.closest("[data-h]"); if(!h || !app.line) return;
   const d = e.key==="ArrowUp" ? 1 : e.key==="ArrowDown" ? -1 : 0; if(!d) return; e.preventDefault();
-  const i = +h.dataset.h, cur = i===0 ? app.line.c : app.line.c + app.line.m*gs.xm;
+  const i = +h.dataset.h, cur = app.line.c + app.line.m*(i===0 ? H0*gs.xm : gs.xm);
   setHandle(i, cur + d*gs.y1*(e.shiftKey?0.01:0.0025)); renderGraph();
   const again = graph.querySelector('[data-h="'+i+'"]'); if(again) again.focus(); });
 
