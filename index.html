@@ -94,10 +94,10 @@ h2{font-family:var(--f-display);font-weight:600;font-size:1.35rem;line-height:1.
 .btn:disabled{opacity:.5;cursor:default}
 
 /* Explore */
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:6px 12px;cursor:pointer;text-align:left;line-height:1.25}
+.chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:6px 10px;min-width:0;cursor:pointer;text-align:left;line-height:1.25}
 .chip b{display:block}
-.chip span{font-family:var(--f-mono);font-size:.82rem;color:var(--muted)}
+.chip span{display:block;font-family:var(--f-mono);font-size:.8rem;color:var(--muted);white-space:nowrap}
 .chip[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft)}
 .bar{display:flex;height:30px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2)}
 .bar .v{background:var(--accent)}
@@ -801,7 +801,7 @@ setInterval(sampleMeters, 320);
 /* ---------- explore ---------- */
 const cellsEl = $("cells");
 CELLS.forEach(c => { const b = document.createElement("button"); b.className="chip"; b.type="button"; b.setAttribute("role","radio"); b.dataset.id=c.id;
-  b.innerHTML = "<b>"+c.name+"</b><span>ε "+fmt(c.emf)+" V · r "+fmt(c.r)+" Ω</span>";
+  b.innerHTML = "<b>"+c.name+"</b><span>ε "+fmt(c.emf)+" V</span><span>r "+fmt(c.r)+" Ω</span>";
   b.addEventListener("click", () => { app.exploreCell = c; refresh(); }); cellsEl.appendChild(b); });
 function refreshExplore(){
   $("dgLever").setAttribute("d", app.closed ? "M320 198V172" : "M320 198L336 176");
