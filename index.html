@@ -838,7 +838,7 @@ function renderGraph(){
       s += '<text class="halo" x="'+tx+'" y="'+n(GY(t.V/2)+4)+'" font-size="12" text-anchor="'+anchor+'" fill="var(--accent)">terminal p.d. '+fmt(t.V)+' V</text>';
       s += '<text class="halo" x="'+tx+'" y="'+n(Math.max(GY((t.V+c.emf)/2)+4, GY(c.emf)+15))+'" font-size="12" font-weight="600" text-anchor="'+anchor+'" fill="var(--lost)">lost volts '+fmt(t.lost)+' V</text>';
     } else s += '<text class="halo" x="'+(x+14)+'" y="'+n(GY(c.emf)+20)+'" font-size="12" fill="var(--lost)">no current, no lost volts</text>';
-    s += '<circle cx="'+x+'" cy="'+n(GY(t.V))+'" r="9" fill="var(--paper)" stroke="var(--point)" stroke-width="2"/>' + cross(t.I,t.V,2.4);
+    s += '<circle cx="'+x+'" cy="'+n(GY(t.V))+'" r="7" fill="var(--point)" stroke="var(--paper)" stroke-width="2.5"/>';
   } else {
     if(app.checked && app.mystery){ const m = app.mystery, xe = Math.min(gs.xm, m.emf/m.r), xl = xe*0.5;
       s += '<line x1="'+n(GX(0))+'" y1="'+n(GY(m.emf))+'" x2="'+n(GX(xe))+'" y2="'+n(GY(m.emf-m.r*xe))+'" stroke="var(--ok)" stroke-width="2" stroke-dasharray="7 5"/>';
@@ -856,7 +856,7 @@ function renderGraph(){
   $("lineBtn").textContent = app.line ? "Remove line" : "Add line of best fit";
   $("lineBtn").disabled = !app.line && app.readings.length < 2;
   $("graphNote").textContent = explore
-    ? "The cross shows this circuit now. It slides along the cell's line as you change the variable resistor. The line itself, and its gradient, only change when you change the cell."
+    ? "The dot shows this circuit now. It slides along the cell's line as you change the variable resistor. The line itself, and its gradient, only change when you change the cell."
     : "Points appear here as you record them. Drag the two round handles to place your line of best fit.";
 }
 $("lineBtn").addEventListener("click", () => {
