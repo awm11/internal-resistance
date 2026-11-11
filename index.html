@@ -455,7 +455,7 @@ const CELLS = [
   {id:"old",   name:"Old cell",   emf:1.5, r:1.60, k:1}
 ];
 const app = {
-  mode:"explore", exploreCell:CELLS[1], mystery:null, R:5, closed:true, paused:false,
+  mode:"explore", exploreCell:CELLS[1], mystery:null, R:5, closed:true, paused:false, f:1, // f: how far the current has got towards its steady value after the switch moves
   shown:{I1:0,I2:0,V:0}, readings:[], line:null, checked:false
 };
 const fmt = (x,d=2) => x.toFixed(d);
@@ -466,9 +466,8 @@ const cell = () => app.mode==="explore" ? app.exploreCell : app.mystery;
    so the currents stay in a sensible range whatever the EMF. */
 function truth(){
   const c = cell();
-  if(!app.closed) return {I:0, V:c.emf, lost:0};
-  const Re = app.R*c.k, I = c.emf/(Re + c.r);
-  return {I, V:I*Re, lost:I*c.r};
+  const I = c.emf/(app.R*c.k + c.r) * app.f;
+  return {I, V:c.emf - I*c.r, lost:I*c.r};
 }
 function gauss(){ let u=0,v=0; while(!u)u=Math.random(); v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(6.2832*v); }
 function newMystery(){
@@ -727,7 +726,16 @@ function draw(){
 
 /* ---------- loop ---------- */
 let sub = 10, slow = 0;
-function frame(){
+let lastT = performance.now();
+const SWITCH_TAU = 0.35; // seconds; the current settles in about 1.5 s
+function frame(now){
+  const dts = Math.min(0.1, ((now||performance.now()) - lastT)/1000); lastT = now||performance.now();
+  const target = app.closed ? 1 : 0;
+  if(app.f !== target){
+    app.f += (target - app.f)*(1 - Math.exp(-dts/SWITCH_TAU));
+    if(Math.abs(target - app.f) < 0.002) app.f = target;
+    if(app.mode==="explore"){ sampleMeters(); refreshExplore(); renderGraph(); }
+  }
   if(!app.paused){
     pushHistory();
     const t0 = performance.now();
@@ -760,7 +768,7 @@ cv.addEventListener("pointerup", () => dragging = false); cv.addEventListener("p
 
 /* ---------- meters: each ammeter has its own scatter ---------- */
 function sampleMeters(){
-  const t = truth(), c = cell(), amp = () => app.closed ? Math.max(0, r2(t.I + gauss()*0.004)) : 0;
+  const t = truth(), c = cell(), amp = () => t.I > 0.001 ? Math.max(0, r2(t.I + gauss()*0.004)) : 0;
   app.shown.I1 = amp(); app.shown.I2 = amp();
   app.shown.V = app.mode==="practical" ? Math.max(0, r2(t.V + gauss()*0.006*c.k)) : t.V;
   $("mI").textContent = fmt(app.shown.I1); $("mV").textContent = fmt(app.shown.V);
@@ -780,7 +788,7 @@ function refreshExplore(){
   $("barV").style.width = (t.V/c.emf*100)+"%"; $("barL").style.width = (t.lost/c.emf*100)+"%";
   $("eqE").textContent = fmt(c.emf)+" V"; $("eqV").textContent = fmt(t.V)+" V"; $("eqL").textContent = fmt(t.lost)+" V";
   $("eqL2").textContent = fmt(t.lost)+" V"; $("eqI").textContent = fmt(t.I)+" A"; $("eqR").textContent = fmt(c.r)+" Ω";
-  $("takeaway").innerHTML = app.closed
+  $("takeaway").innerHTML = t.I > 0.005
     ? "<b><i>r</i> is still "+fmt(c.r)+" Ω.</b> Changing the variable resistor changes the current, and the lost volts follow the current: "+fmt(t.lost)+" V at "+fmt(t.I)+" A."
     : "<b>No current, so no lost volts.</b> <i>r</i> is still "+fmt(c.r)+" Ω, but "+fmt(0)+" A × "+fmt(c.r)+" Ω = 0. The terminal p.d. equals the EMF.";
 }
@@ -834,7 +842,7 @@ function renderGraph(){
     { const xl = xe*0.62, ang = Math.atan2(GY(c.emf-c.r*xe)-GY(c.emf), GX(xe)-GX(0))*180/Math.PI;
       s += '<text class="halo" transform="translate('+n(GX(xl))+' '+n(GY(c.emf-c.r*xl))+') rotate('+n(ang)+')" x="0" y="24" font-size="12" text-anchor="middle" fill="var(--accent)">gradient = −r = −'+fmt(c.r)+' Ω</text>'; }
     s += '<line x1="'+n(GX(0))+'" y1="'+n(GY(c.emf))+'" x2="'+n(GX(xe))+'" y2="'+n(GY(c.emf-c.r*xe))+'" stroke="var(--accent)" stroke-width="2.5"/>';
-    if(app.closed){
+    if(t.I > 0.005){
       s += '<line x1="'+x+'" x2="'+x+'" y1="'+bottom+'" y2="'+n(GY(t.V))+'" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 4"/>';
       s += '<line x1="'+x+'" x2="'+x+'" y1="'+n(GY(t.V))+'" y2="'+n(GY(c.emf))+'" stroke="var(--lost)" stroke-width="5"/>';
       s += '<text class="halo" x="'+tx+'" y="'+n(GY(t.V/2)+4)+'" font-size="12" text-anchor="'+anchor+'" fill="var(--accent)">terminal p.d. '+fmt(t.V)+' V</text>';
