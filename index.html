@@ -621,6 +621,7 @@ const SEGS = (function(){
 const B0 = Math.floor((G.battX1-G.L)/eng.SEG), B1 = Math.ceil((G.battX2-G.L)/eng.SEG);
 const tint = rel => "rgba(43,185,221,"+Math.min(0.4,rel*0.55).toFixed(3)+")";
 let dragging = false;
+const REDUCED = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 const INK = "#17324a", INK_SOFT = "#4f6b80";
 function label(txt,x,y,o={}){
   const fam = o.sym ? '"Source Serif 4",Georgia,serif' : o.mono ? '"IBM Plex Mono",ui-monospace,monospace' : '"Source Sans 3",system-ui,sans-serif';
@@ -745,6 +746,12 @@ function draw(){
   ctx.beginPath(); ctx.roundRect(xc-17,GY_-8,34,16,8); ctx.fill(); ctx.stroke();
   ctx.lineWidth = 1.8; ctx.lineCap = "round"; ctx.lineJoin = "round";
   ctx.beginPath(); ctx.moveTo(xc-6,GY_-4); ctx.lineTo(xc-10,GY_); ctx.lineTo(xc-6,GY_+4); ctx.moveTo(xc+6,GY_-4); ctx.lineTo(xc+10,GY_); ctx.lineTo(xc+6,GY_+4); ctx.stroke();
+  if(!app.rheoTouched){ // hint: pulse round the grip until it is first moved
+    const t = REDUCED ? 0.35 : (performance.now()/1400)%1, grow = 4 + t*16;
+    ctx.strokeStyle = "rgba(8,125,166,"+(0.75*(1-t)).toFixed(3)+")"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.roundRect(xc-17-grow, GY_-8-grow, 34+2*grow, 16+2*grow, 8+grow); ctx.stroke();
+    label("drag me", xc, GY_-18-(REDUCED?6:4+Math.sin(performance.now()/350)*2), {size:12, weight:"600", color:"#087da6"});
+  }
   ctx.lineCap = "butt";
   label("variable resistor"+(explore ? "   R = "+fmt(app.R,1)+" Ω" : ""), (G.trackX1+G.trackX2)/2, G.B+m+FRAME+22, {size:14});
 
@@ -792,7 +799,7 @@ function frame(now){
 
 /* ---------- controls ---------- */
 const rheo = $("rheo");
-function setR(v){ app.R = clamp(v, G.RMIN, G.RMAX); rheo.value = app.R;
+function setR(v){ app.rheoTouched = true; app.R = clamp(v, G.RMIN, G.RMAX); rheo.value = app.R;
   rheo.setAttribute("aria-valuetext", app.mode==="explore" ? app.R.toFixed(1)+" ohms" : Math.round(app.R/G.RMAX*100)+"% of the track"); refresh(); }
 rheo.addEventListener("input", () => setR(+rheo.value));
 function setSwitch(closed){ app.closed = closed; $("switchBtn").textContent = "Switch: "+(closed?"closed":"open"); $("switchBtn").setAttribute("aria-pressed", String(closed)); refresh(); }
