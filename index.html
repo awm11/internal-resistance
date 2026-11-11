@@ -14,7 +14,7 @@
   --bg:#edf1ef; --surface:#ffffff; --surface-2:#e2e8e5; --fg:#132120; --muted:#4d5f5b; --line:#c8d3cf;
   --accent:#0d7a70; --accent-soft:#d3ebe7;
   --lost:#b3541e; --lost-soft:#f6e3d6;
-  --point:#6a3fd0;
+  --point:#6a3fd0; --cellline:#2a5c99;
   --ok:#1b7f45; --ok-soft:#dcf1e3; --warn:#9a6a00; --warn-soft:#f7ecd0; --bad:#b8352b; --bad-soft:#f8e0dd;
   --paper:#fbfdfc; --grid:#d5e3de; --grid-major:#a9c2ba;
   --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
@@ -28,7 +28,7 @@
   --bg:#0a1213; --surface:#111c1e; --surface-2:#172629; --fg:#e2ecea; --muted:#92a6a2; --line:#253739;
   --accent:#3cc3b2; --accent-soft:#163a37;
   --lost:#f09a5e; --lost-soft:#3a2415;
-  --point:#b9a6ff;
+  --point:#b9a6ff; --cellline:#86b6f0;
   --ok:#4cc77f; --ok-soft:#15301f; --warn:#e5b443; --warn-soft:#33280f; --bad:#ff6d60; --bad-soft:#3a1a17;
   --paper:#0e1819; --grid:#1b2b2d; --grid-major:#2f4649;
   color-scheme:dark}}
@@ -36,7 +36,7 @@
   --bg:#0a1213; --surface:#111c1e; --surface-2:#172629; --fg:#e2ecea; --muted:#92a6a2; --line:#253739;
   --accent:#3cc3b2; --accent-soft:#163a37;
   --lost:#f09a5e; --lost-soft:#3a2415;
-  --point:#b9a6ff;
+  --point:#b9a6ff; --cellline:#86b6f0;
   --ok:#4cc77f; --ok-soft:#15301f; --warn:#e5b443; --warn-soft:#33280f; --bad:#ff6d60; --bad-soft:#3a1a17;
   --paper:#0e1819; --grid:#1b2b2d; --grid-major:#2f4649;
   color-scheme:dark}
@@ -895,9 +895,8 @@ function renderGraph(){
     const c = cell(), t = truth(), xe = Math.min(gs.xm, c.emf/c.r), x = n(GX(t.I)), flip = t.I > 1.7, tx = flip ? x-10 : x+10, anchor = flip ? "end" : "start";
     s += '<line x1="'+gs.l+'" x2="'+right+'" y1="'+n(GY(c.emf))+'" y2="'+n(GY(c.emf))+'" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="7 5"/>';
     s += '<text class="halo" x="'+(gs.l+10)+'" y="'+n(GY(c.emf)-8)+'" font-size="12" fill="var(--muted)">EMF ε = '+fmt(c.emf)+' V</text>';
-    { const xl = xe*0.62, ang = Math.atan2(GY(c.emf-c.r*xe)-GY(c.emf), GX(xe)-GX(0))*180/Math.PI;
-      s += '<text class="halo" transform="translate('+n(GX(xl))+' '+n(GY(c.emf-c.r*xl))+') rotate('+n(ang)+')" x="0" y="24" font-size="12" text-anchor="middle" fill="var(--accent)">gradient = −r = −'+fmt(c.r)+' Ω</text>'; }
-    s += '<line x1="'+n(GX(0))+'" y1="'+n(GY(c.emf))+'" x2="'+n(GX(xe))+'" y2="'+n(GY(c.emf-c.r*xe))+'" stroke="var(--accent)" stroke-width="2.5"/>';
+    s += '<text class="halo" x="'+(right-16)+'" y="'+n(GY(c.emf)+20)+'" font-size="12" text-anchor="end" fill="var(--cellline)">gradient = −r = −'+fmt(c.r)+' Ω</text>';
+    s += '<line x1="'+n(GX(0))+'" y1="'+n(GY(c.emf))+'" x2="'+n(GX(xe))+'" y2="'+n(GY(c.emf-c.r*xe))+'" stroke="var(--cellline)" stroke-width="2.5"/>';
     if(t.I > 0.005){
       s += '<line x1="'+x+'" x2="'+x+'" y1="'+bottom+'" y2="'+n(GY(t.V))+'" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 4"/>';
       s += '<line x1="'+x+'" x2="'+x+'" y1="'+n(GY(t.V))+'" y2="'+n(GY(c.emf))+'" stroke="var(--lost)" stroke-width="5"/>';
